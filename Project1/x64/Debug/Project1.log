@@ -1,2 +1,5 @@
 ﻿  テスト用.c
+C:\Users\2023-001-user\Desktop\米倉\Project1\Project1\テスト用.c(20,1): warning C4716: 'start_screen': 値を返さなければいけません
+C:\Users\2023-001-user\Desktop\米倉\Project1\Project1\テスト用.c(42,1): warning C4716: 'fire_screen': 値を返さなければいけません
+C:\Users\2023-001-user\Desktop\米倉\Project1\Project1\テスト用.c(31,1): warning C4716: 'library_screen': 値を返さなければいけません
   Project1.vcxproj -> C:\Users\2023-001-user\Desktop\米倉\Project1\x64\Debug\Project1.exe

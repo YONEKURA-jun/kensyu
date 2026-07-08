@@ -8,9 +8,10 @@
 #define PERSON_NAME 41
 #define COMPANY 20
 #define WORK 6
+#define INPUT_ERROR -1
 
 //異常な入力を弾く関数から値を受け取り、状態をスタート画面に戻す。
-#define SAFETY_CHECK(button) {if(button == -1){\
+#define SAFETY_CHECK(button) {if(button == INPUT_ERROR){\
                              printf("不正な入力です\n");\
                              return;}}
 
@@ -36,6 +37,8 @@ enum CHOICE_UNIT {
 	SINGLE_UNIT,
 	ALL_UNIT,
 };
+
+
 
 
 typedef struct member {
@@ -67,7 +70,7 @@ void show_library_screen();//登録済仲間ライブラリ閲覧の画面
 void show_menber(int button);//仲間ステータス閲覧関数
 void delete_person(int button);//単体仲間解雇の関数//必要かは微妙である
 int very_safety_input(int lowest, int highest);//異常な入力を弾く関数
-
+void to_struct_array_copy(int buntton);//仲間単体消去時の処理をまとめた関数
 
 int main(void) {
 
@@ -230,12 +233,14 @@ void delete_parties_screen() {
 
 		button = very_safety_input(1, g_person);
 		SAFETY_CHECK(button)
+		
+		int partys_number = button - 1;
 
-		delete_person(button - 1);
+		delete_person(partys_number);
 		g_person--;
 
-		for (int i = button - 1; i < g_person; i++) {
-			ast_parties[i] = ast_parties[i + 1];
+		for (int i = partys_number; i < g_person; i++) {
+			to_struct_array_copy(i);
 		}
 		break;
 
@@ -262,7 +267,7 @@ void delete_person(int choice) {
 int very_safety_input(int lowest, int highest) {
 	int button;
 	int input_check;
-	int error_input = -1;
+	int error_input = INPUT_ERROR;
 
 	
 	input_check = scanf_s("%d", &button);
@@ -276,6 +281,12 @@ int very_safety_input(int lowest, int highest) {
 	else {
 		return(error_input);
 	}
+}
+
+void to_struct_array_copy(int button) {
+	strcpy_s(ast_parties[button].sz_name,PERSON_NAME, ast_parties[button + 1].sz_name);
+	ast_parties[button].b_gender = ast_parties[button + 1].b_gender;
+	ast_parties[button].n_job = ast_parties[button + 1].n_job;
 }
 
 

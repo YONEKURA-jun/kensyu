@@ -4,23 +4,26 @@
 #include <string.h>
 #include <ctype.h>
 
+
 #define PERSON_NAME 41
 #define COMPANY 20
 #define WORK 6
-#define SAFETY_CHECK  do{if (button == -1){return;}}while(0)
 
-#define MEMBER_IS_ENPTY do {if(g_person == 0){\
-                            printf("誰も仲間がいないようだ\n"); \
-                            printf("\n");\
-                            return;\
-						    }}while (0);
+//異常な入力を弾く関数から値を受け取り、状態をスタート画面に戻す。
+#define SAFETY_CHECK(button) {if(button == -1){\
+                             printf("不正な入力です\n");\
+                             return;}}
 
 
-#define MEMBER_IS_FULL do  {if(g_person == 20){\
-                            printf("それ以上の仲間は必要ないようだ"); \
-                            printf("\n");\
-                            return;\
-						    }}while (0);
+#define MEMBER_IS_ENPTY(button) {if(button == 0){\
+                                 printf("誰も仲間がいないようだ\n"); \
+                                 printf("\n");\
+                                 return;}}
+
+#define MEMBER_IS_FULL(button) {if(button == 20){\
+                                printf("それ以上の仲間は必要ないようだ"); \
+                                printf("\n");\
+                                return;}}
 
 
 enum CHOICE {
@@ -55,12 +58,12 @@ char* psz_job_List[WORK] = {
 	{"遊び人"},
 };
 
-int g_person = 0;//現在のパーティー人数を格納する
+static int g_person = 0;//現在のパーティー人数を格納する
 
 int show_start_screen(int button);//スタート画
 void add_menbers_screen();//仲間追加画面
 void delete_parties_screen(); //仲間解雇の画面
-void show_library_screen();//登録済み仲間ライブラリの画面
+void show_library_screen();//登録済仲間ライブラリ閲覧の画面
 void show_menber(int button);//仲間ステータス閲覧関数
 void delete_person(int button);//単体仲間解雇の関数//必要かは微妙である
 int very_safety_input(int lowest, int highest);//異常な入力を弾く関数
@@ -78,20 +81,18 @@ int main(void) {
 
 		switch (n_you_choice) {
 
-		case LIBRARY: {
+		case LIBRARY: 
 			show_library_screen();
 			break;
-		}
 
-		case WELCOM: {
+		case WELCOM: 
 			add_menbers_screen();
 			break;
-		}
 
-		case DELETE: {
+		case DELETE: 
 			delete_parties_screen();
 			break;
-		}
+
 		default:
 			end_game_flag = !end_game_flag;
 			break;
@@ -119,7 +120,8 @@ int  show_start_screen(int button){
 
 
 void show_library_screen(void) {
-	MEMBER_IS_ENPTY;
+	MEMBER_IS_ENPTY(g_person)
+	
 	printf("閲覧方法を選んでください\n");
 	printf("\n");
 	int button = -1;
@@ -129,34 +131,30 @@ void show_library_screen(void) {
 	printf("上記以外：やっぱりやめる\n");
 	printf("\n");
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
-	SAFETY_CHECK;
+	SAFETY_CHECK(button)
 
 
-	switch (button) {
-	case SINGLE_UNIT: {
-		printf("何人目の仲間を閲覧しますか？\n");
-		
-		very_safety_input(1, COMPANY);
-		SAFETY_CHECK;
+		switch (button) {
+		case SINGLE_UNIT:
+			printf("何人目の仲間を閲覧しますか？\n");
+			very_safety_input(1, COMPANY);
+			SAFETY_CHECK(button)
+				show_menber(button);
+			break;
 
-		show_menber(button);
-		break;
-	}
-	case ALL_UNIT: {
-		for (int i = 0; i < g_person; i++) {
-			  show_menber(i);
-		    }
-		break;
-	}
-	default:
-		break;
+		case ALL_UNIT:
+			for (int i = 0; i < g_person; i++) {
+				show_menber(i);
+			}
+			break;
 
-	}
-
+		default:
+			break;
+		}
 }
 
 void add_menbers_screen(void) {
-	MEMBER_IS_FULL;
+	MEMBER_IS_FULL(g_person)
 	printf("仲間の名前を教えて下さい\n");
 	
 
@@ -174,9 +172,9 @@ void add_menbers_screen(void) {
 
 	
 	button = very_safety_input(0,1);
-	SAFETY_CHECK;
+	SAFETY_CHECK(button)
 	ast_parties[g_person].b_gender = button;
-	rewind(stdin);
+	
 
 	printf("仲間の職業を教えて下さい\n");
 	for (int i = 0; i < WORK; i++) {
@@ -184,6 +182,7 @@ void add_menbers_screen(void) {
 	}
 
 	button = very_safety_input(0,WORK);
+	SAFETY_CHECK(button)
 	ast_parties[g_person].n_job = button;
 
 	printf("次の仲間が追加されました\n");
@@ -209,7 +208,7 @@ void show_menber(int person_number) {
 }
 
 void delete_parties_screen() {
-	MEMBER_IS_ENPTY;
+	MEMBER_IS_ENPTY(g_person)
 	printf("特定の仲間を削除");
 	printf("\n");
 
@@ -221,37 +220,36 @@ void delete_parties_screen() {
 	printf("\n");
 
 	button = very_safety_input(SINGLE_UNIT,ALL_UNIT);
-	SAFETY_CHECK;
+	SAFETY_CHECK(button)
 	
 	switch (button) {
 
-	case SINGLE_UNIT: {
-		     printf("現在%d人の仲間がいます\n", g_person);
-		     printf("何番目の仲間を削除しますか？\n");
+	case SINGLE_UNIT: 
+		printf("現在%d人の仲間がいます\n", g_person);
+		printf("何番目の仲間を削除しますか？\n");
 
-		     button = very_safety_input(1,COMPANY);
-		     SAFETY_CHECK;
- 
-		     delete_person(button - 1);
-		     g_person--;
+		button = very_safety_input(1, COMPANY);
+		SAFETY_CHECK(button)
 
-		     for (int i = button - 1; i < g_person; i++) {
-			 ast_parties[i] = ast_parties[i + 1];
-			
+		delete_person(button - 1);
+		g_person--;
+
+		for (int i = button - 1; i < g_person; i++) {
+			ast_parties[i] = ast_parties[i + 1];
 		}
     break;
-	}
 
-	case ALL_UNIT: {
+	case ALL_UNIT: 
 		memset(ast_parties, 0, sizeof(ast_parties));
 		g_person = 0;
 	break;
+
+	default:
+		break;
 	}
-	default:break;
-		}
-	rewind(stdin);
-	return;
-	}
+
+return;
+}
 	
 
 void delete_person(int choice) {
@@ -266,7 +264,9 @@ int very_safety_input(int lowest, int highest) {
 	int input_check;
 	int error_input = -1;
 
+	
 	input_check = scanf_s("%d", &button);
+	rewind(stdin);
 
 	//scanf_sが成功して、正統な入力の範囲だった時
 	if (input_check == 1 && button >= lowest && button <= highest) {
@@ -274,9 +274,6 @@ int very_safety_input(int lowest, int highest) {
 	}
 
 	else {
-		printf("不正な入力です");
-		printf("\n");
-		rewind(stdin);
 		return(error_input);
 	}
 }

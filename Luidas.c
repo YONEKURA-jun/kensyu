@@ -228,7 +228,7 @@ void delete_parties_screen() {
 		printf("Œ»İ%dl‚Ì’‡ŠÔ‚ª‚¢‚Ü‚·\n", g_person);
 		printf("‰½”Ô–Ú‚Ì’‡ŠÔ‚ğíœ‚µ‚Ü‚·‚©H\n");
 
-		button = very_safety_input(1, COMPANY);
+		button = very_safety_input(1, g_person);
 		SAFETY_CHECK(button)
 
 		delete_person(button - 1);

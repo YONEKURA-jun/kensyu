@@ -137,9 +137,9 @@ void show_library_screen(void) {
 		switch (button) {
 		case SINGLE_UNIT:
 			printf("‰½l–Ú‚Ì’‡ŠÔ‚ğ‰{——‚µ‚Ü‚·‚©H\n");
-			very_safety_input(1, COMPANY);
+			very_safety_input(1, g_person);
 			SAFETY_CHECK(button)
-				show_menber(button);
+			show_menber(button);
 			break;
 
 		case ALL_UNIT:
@@ -237,12 +237,12 @@ void delete_parties_screen() {
 		for (int i = button - 1; i < g_person; i++) {
 			ast_parties[i] = ast_parties[i + 1];
 		}
-    break;
+		break;
 
 	case ALL_UNIT: 
 		memset(ast_parties, 0, sizeof(ast_parties));
 		g_person = 0;
-	break;
+		break;
 
 	default:
 		break;

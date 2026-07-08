@@ -8,10 +8,10 @@
 #define PERSON_NAME 41
 #define COMPANY 20
 #define WORK 6
-#define INPUT_ERROR -1
+#define TO_STANDBY_INPUT_ERROR -1
 
 //異常な入力を弾く関数から値を受け取り、状態をスタート画面に戻す。
-#define SAFETY_CHECK(button) {if(button == INPUT_ERROR){\
+#define SAFETY_CHECK(button) {if(button == TO_STANDBY_INPUT_ERROR){\
                              printf("不正な入力です\n");\
                              return;}}
 
@@ -79,7 +79,7 @@ int main(void) {
 	bool end_game_flag = 0;
 
 	while (end_game_flag == 0) {
-		int n_you_choice = -1;
+		int n_you_choice = TO_STANDBY_INPUT_ERROR;
 		n_you_choice = show_start_screen(n_you_choice);
 
 		switch (n_you_choice) {
@@ -127,7 +127,7 @@ void show_library_screen(void) {
 	
 	printf("閲覧方法を選んでください\n");
 	printf("\n");
-	int button = -1;
+	int button = TO_STANDBY_INPUT_ERROR;
 
 	printf("0:特定の仲間の閲覧\n");
 	printf("1:全仲間の閲覧\n");
@@ -162,7 +162,7 @@ void add_menbers_screen(void) {
 	
 
 	char sz_Names[PERSON_NAME] = { 0 };
-    int button = -1;
+    int button = TO_STANDBY_INPUT_ERROR;
 
 	scanf_s("%s", sz_Names, PERSON_NAME);//21文字を入力すると弾かれる　//maybe:要修正？？
 	strcpy_s(ast_parties[g_person].sz_name, PERSON_NAME, sz_Names);
@@ -215,7 +215,7 @@ void delete_parties_screen() {
 	printf("特定の仲間を削除");
 	printf("\n");
 
-	int button = -1;
+	int button = TO_STANDBY_INPUT_ERROR;
 
 	printf("0:特定の仲間を削除\n");
 	printf("1:全仲間を削除\n");
@@ -267,7 +267,7 @@ void delete_person(int choice) {
 int very_safety_input(int lowest, int highest) {
 	int button;
 	int input_check;
-	int error_input = INPUT_ERROR;
+	int error_input = TO_STANDBY_INPUT_ERROR;
 
 	
 	input_check = scanf_s("%d", &button);

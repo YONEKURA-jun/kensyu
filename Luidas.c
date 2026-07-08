@@ -70,7 +70,8 @@ void show_library_screen();//登録済仲間ライブラリ閲覧の画面
 void show_menber(int button);//仲間ステータス閲覧関数
 void delete_person(int button);//単体仲間解雇の関数//必要かは微妙である
 int very_safety_input(int lowest, int highest);//異常な入力を弾く関数
-void to_struct_array_copy(int buntton);//仲間単体消去時の処理をまとめた関数
+void to_struct_array_copy(int copy_terget, int copy_source);
+//tergetの構造体配列番号へsourceの構造体配列番号の中身をコピーしてくれる関数
 
 int main(void) {
 
@@ -97,7 +98,7 @@ int main(void) {
 			break;
 
 		default:
-			end_game_flag = !end_game_flag;
+			end_game_flag = 1;
 			break;
 		}
 	}
@@ -240,7 +241,7 @@ void delete_parties_screen() {
 		g_person--;
 
 		for (int i = partys_number; i < g_person; i++) {
-			to_struct_array_copy(i);
+			to_struct_array_copy(partys_number, partys_number+1);
 		}
 		break;
 
@@ -263,7 +264,7 @@ void delete_person(int choice) {
 
 }
 
-//整数型に狙いを絞る
+
 int very_safety_input(int lowest, int highest) {
 	int button;
 	int input_check;
@@ -283,10 +284,10 @@ int very_safety_input(int lowest, int highest) {
 	}
 }
 
-void to_struct_array_copy(int button) {
-	strcpy_s(ast_parties[button].sz_name,PERSON_NAME, ast_parties[button + 1].sz_name);
-	ast_parties[button].b_gender = ast_parties[button + 1].b_gender;
-	ast_parties[button].n_job = ast_parties[button + 1].n_job;
+void to_struct_array_copy(int copy_terget,int copy_source) {
+	strcpy_s(ast_parties[copy_terget].sz_name,PERSON_NAME, ast_parties[copy_source].sz_name);
+	ast_parties[copy_terget].b_gender = ast_parties[copy_source].b_gender;
+	ast_parties[copy_terget].n_job = ast_parties[copy_source].n_job;
 }
 
 

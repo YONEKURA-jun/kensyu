@@ -6,6 +6,7 @@
 
 
 //課題の２　性別と職業順でソート
+//課題の３　追加人数を無制限に
 
 #define PERSON_NAME 41
 #define COMPANY 20
@@ -87,12 +88,10 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest);
 void to_swap_member(MEMBER **swap_terget, MEMBER **swap_source);
 //ターゲットの構造体配列とソース側の構造体配列を入れ替える関数
 
-void to_malloc_array(void);//ポインタ配列の初期化関数
 void to_free_array(void);//取得したメモリの開放関数
 
 
 int main(void) {
-	to_malloc_array();
 
 	
 	bool end_game_flag = 0;
@@ -183,6 +182,8 @@ void show_library_screen(void) {
 
 void add_members_screen(void) {
 	MEMBER_IS_FULL(g_person)
+	pst_parties[g_person] = (MEMBER*)malloc(sizeof(MEMBER));
+
 	printf("仲間の名前を教えて下さい\n");
 	
 
@@ -271,6 +272,7 @@ void delete_parties_screen() {
 
 	case ALL_UNIT: 
 		memset(pst_parties, 0, sizeof(pst_parties));
+		to_free_array();
 		g_person = 0;
 		break;
 
@@ -311,8 +313,7 @@ void sort_member_screen() {
 
 void delete_person(int choice) {
 	memset(&pst_parties[choice], 0, sizeof(pst_parties[choice]));
-
-
+	free(pst_parties[choice]);
 }
 
 
@@ -378,14 +379,10 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
 
 }
 
-void to_malloc_array(void) {
-	for (int i = 0; i < COMPANY; i++) {
-		pst_parties[i] = (MEMBER*)malloc( sizeof(MEMBER));
-	}
-}
+
 
 void to_free_array(void) {
-	for (int i = 0; i < COMPANY; i++) {
+	for (int i = 0; i < g_person; i++) {
 		free(pst_parties[i]);
 		pst_parties[i] = 0;
 	}

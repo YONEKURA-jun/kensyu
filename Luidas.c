@@ -54,7 +54,7 @@ typedef struct member {
 }MEMBER;
 
 
-MEMBER  st_parties[COMPANY] = { 0 };
+
 MEMBER* pst_parties[COMPANY] = { 0 };
 
 
@@ -86,11 +86,13 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest);
 
 void to_swap_member(MEMBER **swap_terget, MEMBER **swap_source);
 //ターゲットの構造体配列とソース側の構造体配列を入れ替える関数
-void to_init_st_and_p_array(void);//配列とポインタ配列の初期化
+
+void to_malloc_array(void);//ポインタ配列の初期化関数
+void to_free_array(void);//取得したメモリの開放関数
 
 
 int main(void) {
-	to_init_st_and_p_array();
+	to_malloc_array();
 
 	
 	bool end_game_flag = 0;
@@ -119,6 +121,7 @@ int main(void) {
 
 		default:
 			end_game_flag = 1;
+			to_free_array();
 			break;
 		}
 	}
@@ -187,7 +190,7 @@ void add_members_screen(void) {
     int button = TO_STANDBY_INPUT_ERROR;
 
 	scanf_s("%s", sz_Names, PERSON_NAME);//21文字を入力すると弾かれる　//maybe:要修正？？
-	strcpy_s(st_parties[g_person].sz_name, PERSON_NAME,sz_Names);
+	strcpy_s(pst_parties[g_person]->sz_name, PERSON_NAME,sz_Names);
 	rewind(stdin);
 
 	printf("仲間の性別を教えて下さい\n");
@@ -198,7 +201,7 @@ void add_members_screen(void) {
 	
 	button = very_safety_input(0,1);
 	SAFETY_CHECK(button)
-	st_parties[g_person].b_gender = button;
+	pst_parties[g_person]->b_gender = button;
 	
 
 	printf("仲間の職業を教えて下さい\n");
@@ -208,7 +211,7 @@ void add_members_screen(void) {
 
 	button = very_safety_input(0,WORK);
 	SAFETY_CHECK(button)
-	st_parties[g_person].n_job = button;
+	pst_parties[g_person]->n_job = button;
 
 	printf("次の仲間が追加されました\n");
 	printf("\n");
@@ -320,11 +323,15 @@ int very_safety_input(int lowest, int highest) {
 	
 	input_check = scanf_s("%d", &button);
 	rewind(stdin);
+	int  scan_check = (input_check!= 1);
+	int  numbers_check = (button < lowest || button > highest);
 
 	//scanf_sが成功して、正統な入力の範囲だった時
-	if (input_check == 1 && button >= lowest && button <= highest) {
-			return(button);
+	if (scan_check || numbers_check) {
+		button = TO_STANDBY_INPUT_ERROR;
 	}
+
+return(button);
 }
 
 void to_struct_array_copy(int copy_terget,int copy_source) {
@@ -371,8 +378,15 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
 
 }
 
-void to_init_st_and_p_array(void) {
+void to_malloc_array(void) {
 	for (int i = 0; i < COMPANY; i++) {
-		pst_parties[i] = &st_parties[i];
+		pst_parties[i] = (MEMBER*)malloc( sizeof(MEMBER));
+	}
+}
+
+void to_free_array(void) {
+	for (int i = 0; i < COMPANY; i++) {
+		free(pst_parties[i]);
+		pst_parties[i] = 0;
 	}
 }

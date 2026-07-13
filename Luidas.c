@@ -16,13 +16,6 @@
 #define WORK_ARRAY 5
 #define GENDER 2
 #define INPUT_FAILED -1
-//todo:下のマクロも関数に
-
-
-#define MEMBER_IS_FULL(now_member) {if(now_member == 20){\
-                                printf("それ以上の仲間は必要ないようだ"); \
-                                printf("\n");\
-                                return;}}
 
 
 enum CHOICE {

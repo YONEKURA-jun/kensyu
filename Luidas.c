@@ -6,19 +6,17 @@
 
 
 //課題の２　性別と職業順でソート
-//課題の３　追加人数を無制限に
+//delete_personにNULLチェックを追加
+//void_to_free_array 処理重くなるか？
+
 
 #define PERSON_NAME 41
 #define COMPANY 20
 #define WORK 6
-#define TO_STANDBY_INPUT_ERROR -1
-
-//異常な入力を弾く関数から値を受け取り、状態をスタート画面に戻す。
-#define SAFETY_CHECK(input) {if(input == TO_STANDBY_INPUT_ERROR){\
-                             printf("不正な入力です\n");\
-                             return;}}
-
-
+#define WORK_ARRAY 5
+#define GENDER 2
+#define INPUT_FAILED -1
+//todo:下のマクロも関数に
 #define MEMBER_IS_ENPTY(now_member) {if(now_member == 0){\
                                  printf("誰も仲間がいないようだ\n"); \
                                  printf("\n");\
@@ -50,13 +48,13 @@ enum TO_CHOICE_SORT {
 
 typedef struct member {
 	char  sz_name[PERSON_NAME];
-	bool  b_gender;
+	int  n_gender;
 	int   n_job;
 }MEMBER;
 
 
 
-MEMBER* pst_parties[COMPANY] = { 0 };
+MEMBER* pst_parties[COMPANY] = { NULL };
 
 
 char* psz_job_List[WORK] = {
@@ -68,6 +66,11 @@ char* psz_job_List[WORK] = {
 	{"遊び人"},
 };
 
+char* p_gender_list[GENDER] = {
+	{"男"},
+	{"女"},
+};
+
 static int g_person = 0;//現在のパーティー人数を格納する
 
 int show_start_screen(int button);//スタート画面
@@ -75,9 +78,13 @@ void add_members_screen();//仲間追加画面
 void delete_parties_screen(); //仲間解雇の画面
 void show_library_screen();//登録済仲間ライブラリ閲覧の画面
 void sort_member_screen();//登録済みの仲間を並べ替える画面
+
 void show_menber(int button);//仲間ステータス閲覧関数
-void delete_person(int button);//単体仲間解雇の関数
-int very_safety_input(int lowest, int highest);//異常な入力を弾く関数
+void delete_person(int button);//仲間単体分メモリの開放を行う関数
+void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
+int very_safety_input(int lowest, int highest);
+//不正な入力を弾く。メモリの確保中の不正な入力にはメモリを開放する関数
+
 
 void to_struct_array_copy(int copy_terget, int copy_source);
 //tergetの構造体配列番号へsourceの構造体配列番号の中身をコピーしてくれる関数
@@ -85,19 +92,20 @@ void to_struct_array_copy(int copy_terget, int copy_source);
 void to_member_sort(int GENDER_OR_JOB, int lowest, int highest);
 //標準入力に合わせたメンバでソートを行う、下限と上限を変えれる関数
 
-void to_swap_member(MEMBER **swap_terget, MEMBER **swap_source);
-//ターゲットの構造体配列とソース側の構造体配列を入れ替える関数
+void to_swap_member(int swap_terget, int swap_source);
+//ターゲットのポインタ構造体配列とソース側のポインタ構造体配列を入れ替える関数
 
-void to_free_array(void);//取得したメモリの開放関数
+void to_error_reaction(void);
+//不正な入力の際に流れるセリフの関数
+
+
 
 
 int main(void) {
-
-	
 	bool end_game_flag = 0;
 
 	while (end_game_flag == 0) {
-		int n_you_choice = TO_STANDBY_INPUT_ERROR;
+		int n_you_choice = INPUT_FAILED;
 		n_you_choice = show_start_screen(n_you_choice);
 
 		switch (n_you_choice) {
@@ -120,12 +128,11 @@ int main(void) {
 
 		default:
 			end_game_flag = 1;
-			to_free_array();
+			to_free_all_array();
 			break;
 		}
 	}
 }
-
 
 
 int  show_start_screen(int button){
@@ -148,25 +155,34 @@ int  show_start_screen(int button){
 
 void show_library_screen(void) {
 	MEMBER_IS_ENPTY(g_person)
+
 	
 	printf("閲覧方法を選んでください\n");
 	printf("\n");
-	int button = TO_STANDBY_INPUT_ERROR;
+	
+	int button = INPUT_FAILED;
+	int partys_number = button - 1;
 
 	printf("0:特定の仲間の閲覧\n");
 	printf("1:全仲間の閲覧\n");
 	printf("上記以外：やっぱりやめる\n");
 	printf("\n");
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
-	SAFETY_CHECK(button)
+	if (button == INPUT_FAILED){
+		to_error_reaction();
+		return;}
 
 
 		switch (button) {
 		case SINGLE_UNIT:
 			printf("何人目の仲間を閲覧しますか？\n");
 			button = very_safety_input(1, g_person);
-			SAFETY_CHECK(button)
-			show_menber(button);
+			if (button == INPUT_FAILED) { 
+				to_error_reaction();
+				return; }
+
+		    
+			show_menber(partys_number);
 			break;
 
 		case ALL_UNIT:
@@ -180,39 +196,63 @@ void show_library_screen(void) {
 		}
 }
 
-void add_members_screen(void) {
+void add_members_screen(void){
+
 	MEMBER_IS_FULL(g_person)
-	pst_parties[g_person] = (MEMBER*)malloc(sizeof(MEMBER));
+    
+	char check_names[PERSON_NAME] = { 0 };
+    
+	int gender= INPUT_FAILED;
+	int job = INPUT_FAILED;
+	int check_failed = INPUT_FAILED;
+
 
 	printf("仲間の名前を教えて下さい\n");
-	
 
-	char sz_Names[PERSON_NAME] = { 0 };
-    int button = TO_STANDBY_INPUT_ERROR;
 
-	scanf_s("%s", sz_Names, PERSON_NAME);//21文字を入力すると弾かれる　//maybe:要修正？？
-	strcpy_s(pst_parties[g_person]->sz_name, PERSON_NAME,sz_Names);
+	check_failed = scanf_s("%s", check_names, PERSON_NAME);
 	rewind(stdin);
+	if (check_failed != 1) {
+		to_error_reaction();
+		return;
+	}
+	
+	
 
 	printf("仲間の性別を教えて下さい\n");
 	printf("0(男)\n");
 	printf("1(女)\n");
 	
-
+	gender = very_safety_input(0,1);
+	if (gender == INPUT_FAILED) {
+		to_error_reaction();
+		return;
+	}
 	
-	button = very_safety_input(0,1);
-	SAFETY_CHECK(button)
-	pst_parties[g_person]->b_gender = button;
-	
-
 	printf("仲間の職業を教えて下さい\n");
 	for (int i = 0; i < WORK; i++) {
 		printf("%d(%s)\n", i, psz_job_List[i]);
 	}
 
-	button = very_safety_input(0,WORK);
-	SAFETY_CHECK(button)
-	pst_parties[g_person]->n_job = button;
+	job = very_safety_input(0,WORK_ARRAY);
+	if (job == INPUT_FAILED) {
+		to_error_reaction();
+		return;
+	}
+	
+
+
+
+    pst_parties[g_person] = (MEMBER*)malloc(sizeof(MEMBER));
+	if (pst_parties[g_person] == NULL) {
+		printf("メモリの確保に失敗した、戻ろう");
+		return;
+	}
+
+
+    strcpy_s(pst_parties[g_person]->sz_name, PERSON_NAME,check_names);
+    pst_parties[g_person]->n_gender = gender;
+    pst_parties[g_person]->n_job = job;
 
 	printf("次の仲間が追加されました\n");
 	printf("\n");
@@ -224,11 +264,8 @@ void add_members_screen(void) {
 void show_menber(int person_number) {
 	printf("名前 : %s\n", pst_parties[person_number]->sz_name);
 
-	if (pst_parties[person_number]->b_gender == 0) {
-		printf("性別 : %s\n", "男");
-	}
-	else printf("性別 : %s\n", "女");
-
+	int gender_look = pst_parties[person_number]->n_gender;
+	printf("性別： %s\n", p_gender_list[gender_look]);
 
 	int job_look = pst_parties[person_number]->n_job;
 	printf("職業 : %s\n", psz_job_List[job_look]);
@@ -241,7 +278,8 @@ void delete_parties_screen() {
 	printf("特定の仲間を削除");
 	printf("\n");
 
-	int button = TO_STANDBY_INPUT_ERROR;
+	int button = INPUT_FAILED;
+	int partys_number = button - 1;
 
 	printf("0:特定の仲間を削除\n");
 	printf("1:全仲間を削除\n");
@@ -249,7 +287,9 @@ void delete_parties_screen() {
 	printf("\n");
 
 	button = very_safety_input(SINGLE_UNIT,ALL_UNIT);
-	SAFETY_CHECK(button)
+	if (button == INPUT_FAILED) { 
+		to_error_reaction();
+		return; }
 	
 	switch (button) {
 
@@ -258,21 +298,23 @@ void delete_parties_screen() {
 		printf("何番目の仲間を削除しますか？\n");
 
 		button = very_safety_input(1, g_person);
-		SAFETY_CHECK(button)
+		if (button == INPUT_FAILED) {
+			to_error_reaction();
+			return; }
 		
-		int partys_number = button - 1;
-
+		
 		delete_person(partys_number);
 		g_person--;
 
 		for (int i = partys_number; i < g_person; i++) {
 			to_struct_array_copy(partys_number, partys_number+1);
 		}
+
+
 		break;
 
 	case ALL_UNIT: 
-		memset(pst_parties, 0, sizeof(pst_parties));
-		to_free_array();
+		to_free_all_array();
 		g_person = 0;
 		break;
 
@@ -286,7 +328,7 @@ return;
 
 void sort_member_screen() {
 	MEMBER_IS_ENPTY(g_person)
-	int button = TO_STANDBY_INPUT_ERROR;
+	int button = INPUT_FAILED;
 
 	printf("ソートの方法を選んでください￥ｎ");
 	printf("\n");
@@ -296,7 +338,9 @@ void sort_member_screen() {
 	printf("上記以外:やっぱりやめる\n");
 
 	button = very_safety_input(GEMDER,JOB);
-	SAFETY_CHECK(button)
+	if (button == INPUT_FAILED) {
+		to_error_reaction();
+		return; }
 
 		switch (button) {
 		case GEMDER:
@@ -312,42 +356,45 @@ void sort_member_screen() {
 	
 
 void delete_person(int choice) {
-	memset(&pst_parties[choice], 0, sizeof(pst_parties[choice]));
-	free(pst_parties[choice]);
+
+	if (pst_parties[choice] != NULL) {
+		free(pst_parties[choice]);
+		pst_parties[choice] = NULL;
+	}
 }
 
 
 int very_safety_input(int lowest, int highest) {
 	int button;
 	int input_check;
+	
+
 
 	
 	input_check = scanf_s("%d", &button);
 	rewind(stdin);
-	int  scan_check = (input_check!= 1);
-	int  numbers_check = (button < lowest || button > highest);
-
-	//scanf_sが成功して、正統な入力の範囲だった時
+    int scan_check = (input_check!= 1);
+	int numbers_check = (button < lowest || button > highest);
+	
+	//scanf_sが不正な入力だった時
 	if (scan_check || numbers_check) {
-		button = TO_STANDBY_INPUT_ERROR;
+		button = INPUT_FAILED;
 	}
-
 return(button);
 }
 
 void to_struct_array_copy(int copy_terget,int copy_source) {
-	strcpy_s(pst_parties[copy_terget]->sz_name,PERSON_NAME, pst_parties[copy_source]->sz_name);
-	pst_parties[copy_terget]->b_gender = pst_parties[copy_source]->b_gender;
-	pst_parties[copy_terget]->n_job = pst_parties[copy_source]->n_job;
+	pst_parties[copy_terget] = pst_parties[copy_source];
+	
 }
 
 
-void to_swap_member(MEMBER **swap_terget, MEMBER **swap_source) {
-	MEMBER *vacation = { 0 };
-	vacation = *swap_terget;
-	*swap_terget = *swap_source; 
-	*swap_source = vacation;
-	
+void to_swap_member(int swap_terget, int swap_source) {
+	MEMBER *vacation = NULL;
+	vacation = pst_parties[swap_terget];
+	pst_parties[swap_terget] = pst_parties[swap_source];
+	pst_parties[swap_source] = vacation;
+
 }
 
 void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
@@ -356,8 +403,8 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
 	case GEMDER:
 		for (int i = lowest; i < highest-1; i++) {
 			for (int j = i + 1; j < highest; j++) {
-				if (pst_parties[i]->b_gender > pst_parties [j]->b_gender) {
-					to_swap_member(&pst_parties[i], &pst_parties[j]);
+				if (pst_parties[i]->n_gender > pst_parties [j]->n_gender) {
+					to_swap_member(i, j);
 				}			
 			}
 		}
@@ -369,7 +416,7 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
 		for (int i = lowest; i < highest - 1; i++) {
 			for (int j = i + 1; j < highest; j++) {
 				if (pst_parties[i]->n_job > pst_parties[j]->n_job) {
-					to_swap_member(&pst_parties[i], &pst_parties[j]);
+					to_swap_member(i, j);
 				}
 			}
 		}
@@ -380,10 +427,15 @@ void to_member_sort(int GENDER_OR_JOB, int lowest, int highest){
 }
 
 
-
-void to_free_array(void) {
+void to_free_all_array(void) {
 	for (int i = 0; i < g_person; i++) {
-		free(pst_parties[i]);
-		pst_parties[i] = 0;
+		delete_person(i);
 	}
+}
+
+
+
+void to_error_reaction(void) {
+	printf("不正な入力だ、調子が悪い様だな、戻ろう\n");
+	printf("\n");
 }

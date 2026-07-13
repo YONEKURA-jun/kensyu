@@ -17,10 +17,7 @@
 #define GENDER 2
 #define INPUT_FAILED -1
 //todo:下のマクロも関数に
-#define MEMBER_IS_ENPTY(now_member) {if(now_member == 0){\
-                                 printf("誰も仲間がいないようだ\n"); \
-                                 printf("\n");\
-                                 return;}}
+
 
 #define MEMBER_IS_FULL(now_member) {if(now_member == 20){\
                                 printf("それ以上の仲間は必要ないようだ"); \
@@ -78,6 +75,11 @@ void add_members_screen();//仲間追加画面
 void delete_parties_screen(); //仲間解雇の画面
 void show_library_screen();//登録済仲間ライブラリ閲覧の画面
 void sort_member_screen();//登録済みの仲間を並べ替える画面
+
+int member_is_enpty(int now_member);
+//仲間が居ない状態での解雇・閲覧・ソートの選択を弾く。
+int member_is_full(int now_member);
+//仲間が上限の人数居る状態での仲間の追加選択を弾く
 
 void show_menber(int button);//仲間ステータス閲覧関数
 void delete_person(int button);//仲間単体分メモリの開放を行う関数
@@ -154,7 +156,11 @@ int  show_start_screen(int button){
 
 
 void show_library_screen(void) {
-	MEMBER_IS_ENPTY(g_person)
+	int member_check = 0;
+	member_check = member_is_enpty(g_person);
+	if (member_check == INPUT_FAILED) {
+		return;
+	}
 
 	
 	printf("閲覧方法を選んでください\n");
@@ -198,8 +204,15 @@ void show_library_screen(void) {
 
 void add_members_screen(void){
 
-	MEMBER_IS_FULL(g_person)
-    
+	int member_check = 0;
+	member_check = member_is_full(g_person);
+	if (member_check == INPUT_FAILED) {
+		return;
+	}
+
+
+
+
 	char check_names[PERSON_NAME] = { 0 };
     
 	int gender= INPUT_FAILED;
@@ -274,7 +287,11 @@ void show_menber(int person_number) {
 }
 
 void delete_parties_screen() {
-	MEMBER_IS_ENPTY(g_person)
+	int member_check = 0;
+	member_check = member_is_enpty(g_person);
+	if (member_check == INPUT_FAILED) {
+		return;
+	}
 	printf("特定の仲間を削除");
 	printf("\n");
 
@@ -327,7 +344,11 @@ return;
 
 
 void sort_member_screen() {
-	MEMBER_IS_ENPTY(g_person)
+	int member_check = 0;
+	member_check = member_is_enpty(g_person);
+	if (member_check == INPUT_FAILED) {
+		return;
+	}
 	int button = INPUT_FAILED;
 
 	printf("ソートの方法を選んでください￥ｎ");
@@ -438,4 +459,22 @@ void to_free_all_array(void) {
 void to_error_reaction(void) {
 	printf("不正な入力だ、調子が悪い様だな、戻ろう\n");
 	printf("\n");
+}
+
+
+int member_is_enpty(int now_member) {
+	if (now_member == 0) {
+		printf("誰も仲間がいないようだ\n");
+		printf("\n");
+		return(INPUT_FAILED);
+	}
+}
+
+int member_is_full(int now_member) {
+	if(now_member == 20){
+    printf("それ以上の仲間は必要ないようだ");
+    printf("\n");
+    return(INPUT_FAILED);
+	}
+
 }

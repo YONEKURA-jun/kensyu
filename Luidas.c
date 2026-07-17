@@ -72,7 +72,7 @@ void show_member_screen();//“o˜^Ï’‡ŠÔƒ‰ƒCƒuƒ‰ƒŠ‰{——‚Ì‰æ–Ê
 void delete_parties_screen(); //’‡ŠÔ‰ðŒÙ‚Ì‰æ–Ê
 
 /*
- 
+
 
 
 void sort_member_screen();//“o˜^Ï‚Ý‚Ì’‡ŠÔ‚ð•À‚×‘Ö‚¦‚é‰æ–Ê
@@ -219,7 +219,8 @@ void add_members_screen(void) {
 		p_new_member->p_prev = NULL;
 
 		gp_head = p_new_member;
-	}else {
+	}
+	else {
 		MEMBER* p_end = get_member(g_person - 1);
 
 		p_new_member->p_next = NULL;
@@ -227,8 +228,8 @@ void add_members_screen(void) {
 
 		p_end->p_next = p_new_member;
 	}
-	
-		
+
+
 	printf("ŽŸ‚Ì’‡ŠÔ‚ª’Ç‰Á‚³‚ê‚Ü‚µ‚½\n");
 	printf("\n");
 	show_member(p_new_member);
@@ -261,7 +262,7 @@ void show_member_screen(void) {
 	printf("\n");
 
 	int button = INPUT_FAILED;
-	
+
 	printf("0:“Á’è‚Ì’‡ŠÔ‚Ì‰{——\n");
 	printf("1:‘S’‡ŠÔ‚Ì‰{——\n");
 	printf("ã‹LˆÈŠOF‚â‚Á‚Ï‚è‚â‚ß‚é\n");
@@ -287,7 +288,7 @@ void show_member_screen(void) {
 
 	case ALL_UNIT:
 		temp = gp_head;
-		while(temp != NULL) {
+		while (temp != NULL) {
 			show_member(temp);
 			temp = temp->p_next;
 		}
@@ -310,7 +311,7 @@ void delete_parties_screen() {
 	printf("0:“Á’è‚Ì’‡ŠÔ‚ðíœ\n");
 	printf("1:‘S’‡ŠÔ‚ðíœ\n");
 	printf("ã‹LˆÈŠOF‚â‚Á‚Ï‚è‚â‚ß‚é\n");
-	
+
 
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
 	if (button == INPUT_FAILED) {
@@ -348,30 +349,21 @@ void delete_parties_screen() {
 
 void delete_person(int choice) {
 	MEMBER* temp;
-	MEMBER* save;
 	temp = get_member(choice);
-
+	if (temp == NULL) {
+		return;
+	}
+	if (temp->p_prev != NULL) {
+		temp->p_prev->p_next = temp->p_next;
+	}
+	if (temp->p_next != NULL) {
+		temp->p_next->p_prev = temp->p_prev;
+	}
 	if (temp == gp_head) {
-		if (gp_head->p_next == NULL) {
-			free(gp_head);
-			gp_head = NULL;
-			return;
-		}
-		save = gp_head->p_next;
-		save->p_prev = NULL;
-		free(gp_head);
-		gp_head = save;
-		
+		gp_head = temp->p_next;
 	}
-	else if (temp != NULL) {
-		if (temp->p_prev != NULL) {
-			temp->p_prev->p_next = temp->p_next;
-		}
-		if (temp->p_next != NULL) {
-			temp->p_next->p_prev = temp->p_prev;
-		}
-		free(temp);
-	}
+	free(temp);
+
 }
 
 
@@ -492,12 +484,12 @@ int member_is_enpty(int now_member) {
 MEMBER* get_member(int number) {
 	MEMBER* now_point = { NULL };
 	now_point = gp_head;
-		for (int i = 0; i < number; i++) {
-			if (now_point != NULL) {
-				now_point = now_point->p_next;
-			}
+	for (int i = 0; i < number; i++) {
+		if (now_point != NULL) {
+			now_point = now_point->p_next;
 		}
-		return(now_point);
+	}
+	return(now_point);
 }
 
 int very_safety_input(int lowest, int highest) {

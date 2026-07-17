@@ -68,7 +68,7 @@ static int g_person = 0;//現在のパーティー人数を格納する
 
 int show_start_screen(int button);//スタート画面
 void add_members_screen();//仲間追加画面
-void show_library_screen();//登録済仲間ライブラリ閲覧の画面
+void show_member_screen();//登録済仲間ライブラリ閲覧の画面
 void delete_parties_screen(); //仲間解雇の画面
 
 /*
@@ -93,7 +93,7 @@ void to_swap_member(int swap_terget, int swap_source);
 //引数の番号のリストのポインタを返す関数
 MEMBER* get_member(int number);
 int very_safety_input(int lowest, int highest);//不正な入力を弾く関数
-void show_menber(int button);//仲間ステータス閲覧関数
+void show_member(MEMBER* temp);//仲間ステータス閲覧関数
 
 
 //第二弾
@@ -121,7 +121,7 @@ int main(void) {
 		switch (n_you_choice) {
 
 		case LIBRARY:
-			show_library_screen();
+			show_member_screen();
 			break;
 
 		case WELCOM:
@@ -214,18 +214,12 @@ void add_members_screen(void) {
 	p_new_member->n_gender = gender;
 	p_new_member->n_job = job;
 
-	if (g_person == 0) {//先頭
+	if (g_person == 0) {
 		p_new_member->p_next = NULL;
 		p_new_member->p_prev = NULL;
 
 		gp_head = p_new_member;
-	}
-	
-	//＠ご相談: -1が汚いかなと考えております
-	// 　　　　別で最後のノードを探す関数を作る選択肢と悩みます
-	// 　　　　レビューをお願いします。
-	
-	else {
+	}else {
 		MEMBER* p_end = get_member(g_person - 1);
 
 		p_new_member->p_next = NULL;
@@ -237,25 +231,25 @@ void add_members_screen(void) {
 		
 	printf("次の仲間が追加されました\n");
 	printf("\n");
-	show_menber(g_person);
+	show_member(p_new_member);
 	g_person++;
 
 }
 
-void show_menber(int person_number) {
-	printf("名前 : %s\n", get_member(person_number)->sz_name);
+void show_member(MEMBER* temp) {
+	printf("名前 : %s\n", temp->sz_name);
 
-	int gender_look = get_member(person_number)->n_gender;
+	int gender_look = temp->n_gender;
 	printf("性別： %s\n", p_gender_list[gender_look]);
 
-	int job_look = get_member(person_number)->n_job;
+	int job_look = temp->n_job;
 	printf("職業 : %s\n", psz_job_List[job_look]);
 	printf("\n");
 
 
 }
 
-void show_library_screen(void) {
+void show_member_screen(void) {
 	int member_check = 0;
 	member_check = member_is_enpty(g_person);
 	if (member_check == INPUT_FAILED) {
@@ -271,10 +265,10 @@ void show_library_screen(void) {
 	printf("0:特定の仲間の閲覧\n");
 	printf("1:全仲間の閲覧\n");
 	printf("上記以外：やっぱりやめる\n");
-	printf("\n");
+
+	MEMBER* temp;
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
 	if (button == INPUT_FAILED) {
-		to_error_reaction();
 		return;
 	}
 
@@ -287,12 +281,15 @@ void show_library_screen(void) {
 			return;
 		}
 		int partys_number = button - 1;
-		show_menber(partys_number);
+		temp = get_member(partys_number);
+		show_member(temp);
 		break;
 
 	case ALL_UNIT:
-		for (int i = 0; i < g_person; i++) {
-			show_menber(i);
+		temp = gp_head;
+		while(temp != NULL) {
+			show_member(temp);
+			temp = temp->p_next;
 		}
 		break;
 
@@ -307,19 +304,16 @@ void delete_parties_screen() {
 	if (member_check == INPUT_FAILED) {
 		return;
 	}
-	printf("特定の仲間を削除");
-	printf("\n");
 
 	int button = INPUT_FAILED;
 
 	printf("0:特定の仲間を削除\n");
 	printf("1:全仲間を削除\n");
 	printf("上記以外：やっぱりやめる\n");
-	printf("\n");
+	
 
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
 	if (button == INPUT_FAILED) {
-		to_error_reaction();
 		return;
 	}
 
@@ -352,23 +346,23 @@ void delete_parties_screen() {
 }
 
 
-void delete_person(int choice) {//先頭処理の追加
+void delete_person(int choice) {
 	MEMBER* temp;
 	MEMBER* save;
 	temp = get_member(choice);
 
 	if (temp == gp_head) {
-		if (gp_head->p_next != NULL) {
-			save = gp_head->p_next;
+		if (gp_head->p_next == NULL) {
 			free(gp_head);
-			gp_head = save;
+			gp_head = NULL;
+			return;
 		}
-		else {
-			free(gp_head);
-		}
-	}
+		save = gp_head->p_next;
+		save->p_prev = NULL;
+		free(gp_head);
+		gp_head = save;
 		
-
+	}
 	else if (temp != NULL) {
 		if (temp->p_prev != NULL) {
 			temp->p_prev->p_next = temp->p_next;

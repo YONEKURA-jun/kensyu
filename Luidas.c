@@ -70,31 +70,15 @@ int show_start_screen(int button);//スタート画面
 void add_members_screen();//仲間追加画面
 void show_member_screen();//登録済仲間ライブラリ閲覧の画面
 void delete_parties_screen(); //仲間解雇の画面
-
-/*
-
-
-
 void sort_member_screen();//登録済みの仲間を並べ替える画面
 
-//tergetの構造体配列番号へsourceの構造体配列番号の中身をコピーしてくれる関数
-void to_struct_array_copy(int copy_terget, int copy_source);
-//標準入力に合わせたメンバでソートを行う、下限と上限を変えれる関数
-void to_member_sort(int GENDER_OR_JOB, int lowest, int highest);
-//ターゲットのポインタ構造体配列とソース側のポインタ構造体配列を入れ替える関数
-void to_swap_member(int swap_terget, int swap_source);
-
-
-*/
 
 
 //第一弾
-
 //引数の番号のリストのポインタを返す関数
 MEMBER* get_member(int number);
 int very_safety_input(int lowest, int highest);//不正な入力を弾く関数
 void show_member(MEMBER* temp);//仲間ステータス閲覧関数
-
 
 //第二弾
 //不正な入力の際に流れるセリフの関数
@@ -103,13 +87,16 @@ void to_error_reaction(void);
 //仲間が居ない状態での解雇・閲覧・ソートの選択を弾く。
 int member_is_enpty(int now_member);
 
-
 //第三弾
 void delete_person(int button);//仲間単体分メモリの開放を行う関数
 void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 
+//第四弾 ソート機能の再設計、実装
 
-
+//:ソートを行う関数
+MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
+//:ソートの実際の処理を行う関数
+void to_member_sort(int JOB_or_GENDER);
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -133,7 +120,7 @@ int main(void) {
 			break;
 
 		case SORT:
-			//sort_member_screen();
+			sort_member_screen();
 			break;
 
 		default:
@@ -346,7 +333,6 @@ void delete_parties_screen() {
 	return;
 }
 
-
 void delete_person(int choice) {
 	MEMBER* temp;
 	temp = get_member(choice);
@@ -367,12 +353,6 @@ void delete_person(int choice) {
 }
 
 
-/*
-
-
-
-
-
 void sort_member_screen() {
 	int member_check = 0;
 	member_check = member_is_enpty(g_person);
@@ -390,77 +370,114 @@ void sort_member_screen() {
 
 	button = very_safety_input(GENDERS, JOB);
 	if (button == INPUT_FAILED) {
-		to_error_reaction();
 		return;
 	}
+	to_member_sort(button);
 
-	switch (button) {
-	case GENDERS:
-		to_member_sort(GENDERS, 0, g_person);
-		break;
+}
 
-	case JOB:
-		to_member_sort(JOB, 0, g_person);
-		break;
+
+void to_member_sort(int JOB_or_GENDER) {
+	MEMBER* temp_base = { NULL };
+	MEMBER* temp_key = { NULL };
+	MEMBER* temp_save;
+
+	temp_key = gp_head;
+	while (temp_key != NULL) {
+		temp_save = temp_key->p_next;
+		temp_key->p_next = NULL;
+		temp_key->p_prev = NULL;
+		temp_base = sort_mech(temp_base, temp_key, JOB_or_GENDER);
+		temp_key = temp_save;
 	}
+	gp_head = temp_base;
 
 }
 
+MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
+	MEMBER* temp_base = NULL;
+
+	temp_base = base;//ソート後のリストのヘッダ
 
 
-
-
-void to_struct_array_copy(int copy_terget, int copy_source) {
-	pst_parties[copy_terget] = pst_parties[copy_source];
-
-}
-
-
-void to_swap_member(int swap_terget, int swap_source) {
-	MEMBER* vacation = NULL;
-	vacation = pst_parties[swap_terget];
-	pst_parties[swap_terget] = pst_parties[swap_source];
-	pst_parties[swap_source] = vacation;
-
-}
-
-void to_member_sort(int GENDER_OR_JOB, int lowest, int highest) {
-	switch (GENDER_OR_JOB) {
-
-	case GENDERS:
-		for (int i = lowest; i < highest - 1; i++) {
-			for (int j = i + 1; j < highest; j++) {
-				if (pst_parties[i]->n_gender > pst_parties[j]->n_gender) {
-					to_swap_member(i, j);
+	switch (JOB_or_GENDER) {
+	case(GENDERS):
+		if (temp_base == NULL) {
+			temp_base = key;
+			temp_base->p_prev = NULL;
+			base = temp_base;
+		}
+		else if (temp_base != NULL) {
+			while (temp_base != NULL) {
+				if (temp_base->n_gender <= key->n_gender) {
+					if (temp_base->p_next == NULL) {
+						temp_base->p_next = key;
+						key->p_prev = temp_base;
+						break;
+					}
+					if (temp_base->p_next != NULL) {
+						if (!(temp_base->p_next->n_gender < key->n_gender)) {
+							key->p_next = temp_base->p_next;
+							temp_base->p_next->p_prev = key;
+							key->p_prev = temp_base;
+							temp_base->p_next = key;
+							break;
+						}
+					}
 				}
+				if (temp_base->n_gender >= key->n_gender) {
+					key->p_next = temp_base;
+					key->p_prev = NULL;
+					temp_base->p_prev = key;
+					base = key;
+					break;
+				}
+				temp_base = temp_base->p_next;
 			}
 		}
 
 		break;
 
-
-	case JOB:
-		for (int i = lowest; i < highest - 1; i++) {
-			for (int j = i + 1; j < highest; j++) {
-				if (pst_parties[i]->n_job > pst_parties[j]->n_job) {
-					to_swap_member(i, j);
+	case(JOB):
+		if (temp_base == NULL) {
+			temp_base = key;
+			temp_base->p_prev = NULL;
+			base = temp_base;
+		}
+		else if (temp_base != NULL) {
+			while (temp_base != NULL) {
+				if (temp_base->n_job <= key->n_job) {
+					if (temp_base->p_next == NULL) {
+						temp_base->p_next = key;
+						key->p_prev = temp_base;
+						break;
+					}
+					if (temp_base->p_next != NULL) {
+						if (!(temp_base->p_next->n_job < key->n_job)) {
+							key->p_next = temp_base->p_next;
+							temp_base->p_next->p_prev = key;
+							key->p_prev = temp_base;
+							temp_base->p_next = key;
+							break;
+						}
+					}
 				}
+				if (temp_base->n_job >= key->n_job) {
+					key->p_next = temp_base;
+					key->p_prev = NULL;
+					temp_base->p_prev = key;
+					base = key;
+					break;
+				}
+				temp_base = temp_base->p_next;
 			}
 		}
-
 		break;
 	}
 
+	return(base);
 }
 
-
-
-
-
-	}
-}
-
-*/
 void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {
 		delete_person(i);
@@ -480,10 +497,13 @@ int member_is_enpty(int now_member) {
 	}
 }
 
-
 MEMBER* get_member(int number) {
 	MEMBER* now_point = { NULL };
 	now_point = gp_head;
+	if (number > g_person || number < 0) {
+		now_point = NULL;
+	}
+
 	for (int i = 0; i < number; i++) {
 		if (now_point != NULL) {
 			now_point = now_point->p_next;

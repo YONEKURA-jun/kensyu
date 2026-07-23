@@ -395,8 +395,8 @@ void to_member_sort(int JOB_or_GENDER) {
 }
 
 MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
+	
 	MEMBER* temp_base = NULL;
-
 	temp_base = base;//ソート後のリストのヘッダ
 
 
@@ -409,33 +409,33 @@ MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 		}
 		else if (temp_base != NULL) {
 			while (temp_base != NULL) {
-				if (temp_base->n_gender <= key->n_gender) {
-					if (temp_base->p_next == NULL) {
-						temp_base->p_next = key;
-						key->p_prev = temp_base;
+				if (temp_base->n_gender > key->n_gender) {//負けの時
+					if (temp_base->p_prev == NULL) {
+						key->p_next = temp_base;
+						key->p_prev = NULL;
+						temp_base->p_prev = key;
+						base = key;
 						break;
 					}
-					if (temp_base->p_next != NULL) {
-						if (!(temp_base->p_next->n_gender < key->n_gender)) {
-							key->p_next = temp_base->p_next;
-							temp_base->p_next->p_prev = key;
-							key->p_prev = temp_base;
-							temp_base->p_next = key;
-							break;
-						}
+					else {
+						key->p_next = temp_base;
+						key->p_prev = temp_base->p_prev;
+						temp_base->p_prev->p_next = key;
+						temp_base->p_prev = key;
+						break;
 					}
 				}
-				if (temp_base->n_gender >= key->n_gender) {
-					key->p_next = temp_base;
-					key->p_prev = NULL;
-					temp_base->p_prev = key;
-					base = key;
+				else if (temp_base->p_next == NULL) {
+					temp_base->p_next = key;
+					key->p_prev = temp_base;
 					break;
 				}
+
+
+
 				temp_base = temp_base->p_next;
 			}
 		}
-
 		break;
 
 	case(JOB):
@@ -446,29 +446,30 @@ MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 		}
 		else if (temp_base != NULL) {
 			while (temp_base != NULL) {
-				if (temp_base->n_job <= key->n_job) {
-					if (temp_base->p_next == NULL) {
-						temp_base->p_next = key;
-						key->p_prev = temp_base;
+				if (temp_base->n_job > key->n_job) {//負けの時
+					if (temp_base->p_prev == NULL) {
+						key->p_next = temp_base;
+						key->p_prev = NULL;
+						temp_base->p_prev = key;
+						base = key;
 						break;
 					}
-					if (temp_base->p_next != NULL) {
-						if (!(temp_base->p_next->n_job < key->n_job)) {
-							key->p_next = temp_base->p_next;
-							temp_base->p_next->p_prev = key;
-							key->p_prev = temp_base;
-							temp_base->p_next = key;
-							break;
-						}
+					else {
+						key->p_next = temp_base;
+						key->p_prev = temp_base->p_prev;
+						temp_base->p_prev->p_next = key;
+						temp_base->p_prev = key;
+						break;
 					}
 				}
-				if (temp_base->n_job >= key->n_job) {
-					key->p_next = temp_base;
-					key->p_prev = NULL;
-					temp_base->p_prev = key;
-					base = key;
+				else if (temp_base->p_next == NULL) {
+					temp_base->p_next = key;
+					key->p_prev = temp_base;
 					break;
 				}
+
+
+
 				temp_base = temp_base->p_next;
 			}
 		}

@@ -97,6 +97,10 @@ void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
 //:ソートの実際の処理を行う関数
 void to_member_sort(int JOB_or_GENDER);
+//:値で分岐してソート対象を選択する関数
+int sort_terget_choice(MEMBER* client, int JOB_or_GENDER);
+
+
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -401,89 +405,62 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 	MEMBER* insertion_point = NULL;
 
 	switch (JOB_or_GENDER) {
-		case(GENDERS):
-			if (temp_base == NULL) {
-			temp_base = key;
-			temp_base->p_prev = NULL;
-			base = temp_base;
-			break;
-		}else {
-			while (temp_base != NULL) {
-				if (temp_base->n_gender > key->n_gender) {
-					break;
-				}
-				insertion_point = temp_base;
-				temp_base = temp_base->p_next;
+	case(GENDERS):
+		while (temp_base != NULL) {
+			if (temp_base->n_gender > key->n_gender) {
+				break;
 			}
-		}
-		if (temp_base == NULL) {//mattan
-			insertion_point->p_next = key;
-			key->p_prev = insertion_point;
-			key->p_next = NULL;
-
-		}
-		else if (temp_base->p_prev == NULL) {//senntou
-			key->p_next = temp_base;
-			key->p_prev = NULL;
-			temp_base->p_prev = key;
-			base = key;
-		}
-		else{//tyukan
-			key->p_next = temp_base;
-			key->p_prev = temp_base->p_prev;
-			temp_base->p_prev->p_next = key;
-			temp_base->p_prev = key;
-
+			insertion_point = temp_base;
+			temp_base = temp_base->p_next;
 		}
 		break;
-			
+
 	case(JOB):
-		if (temp_base == NULL) {
+		while (temp_base != NULL) {
+			if (temp_base->n_job > key->n_job) {
+				break;
+			}
+			insertion_point = temp_base;
+			temp_base = temp_base->p_next;
+		}
+		break;
+	}
+
+	if (temp_base == NULL) {//両端　
+		if (insertion_point == NULL) {
 			temp_base = key;
 			temp_base->p_prev = NULL;
 			base = temp_base;
-			break;
-		}else {
-			while (temp_base != NULL) {
-				if (temp_base->n_job > key->n_job) {
-					break;
-				}
-				insertion_point = temp_base;
-				temp_base = temp_base->p_next;
-			}
 		}
-		if (temp_base == NULL) {//mattan
+		else {
 			insertion_point->p_next = key;
 			key->p_prev = insertion_point;
 			key->p_next = NULL;
-
 		}
-		else if (temp_base->p_prev == NULL) {//senntou
-			key->p_next = temp_base;
-			key->p_prev = NULL;
-			temp_base->p_prev = key;
-			base = key;
-		}
-		else{//tyukan
-			key->p_next = temp_base;
-			key->p_prev = temp_base->p_prev;
-			temp_base->p_prev->p_next = key;
-			temp_base->p_prev = key;
-		}
-		break;
+	}
+	else if (temp_base->p_prev == NULL) {//先頭
+		key->p_next = temp_base;
+		key->p_prev = NULL;
+		temp_base->p_prev = key;
+		base = key;
+	}
+	else {//中間
+		key->p_next = temp_base;
+		key->p_prev = temp_base->p_prev;
+		temp_base->p_prev->p_next = key;
+		temp_base->p_prev = key;
 	}
 	return(base);
 }
 
 
-
-
-
-
-
-int point_check(MEMBER* insartion_point) {
-
-
+int sort_terget_choice(MEMBER* client, int JOB_or_GENDER) {
+	switch (JOB_or_GENDER) {
+	case GENDERS:
+		retern(client->n_gender);
+	case JOB:
+		retern(client->n_job);
+	}
 }
 
 void to_free_all_array(void) {

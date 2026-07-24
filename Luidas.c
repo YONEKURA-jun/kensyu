@@ -43,10 +43,6 @@ typedef struct member {
 static MEMBER* gp_head = { NULL };
 
 
-
-
-
-
 char* psz_job_List[WORK] = {
 	{"勇者"},
 	{"戦士"},
@@ -92,13 +88,12 @@ void delete_person(int button);//仲間単体分メモリの開放を行う関数
 void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 
 //第四弾 ソート機能の再設計、実装
-
-//:ソートを行う関数
+//:ソート実行の為、対象リストからノードを一つずつ取り外す関数
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
 //:ソートの実際の処理を行う関数
 void to_member_sort(int JOB_or_GENDER);
 //:値で分岐してソート対象を選択する関数
-int sort_terget_choice(MEMBER* client, int JOB_or_GENDER);
+int sort_target_choice(MEMBER* client, int JOB_or_GENDER);
 
 
 
@@ -397,42 +392,29 @@ void to_member_sort(int JOB_or_GENDER) {
 	gp_head = temp_base;
 
 }
-
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 
 	MEMBER* temp_base = NULL;
 	temp_base = base;
 	MEMBER* insertion_point = NULL;
 
-	switch (JOB_or_GENDER) {
-	case(GENDERS):
-		while (temp_base != NULL) {
-			if (temp_base->n_gender > key->n_gender) {
-				break;
-			}
-			insertion_point = temp_base;
-			temp_base = temp_base->p_next;
-		}
-		break;
+	while (temp_base != NULL) {
+		if (sort_target_choice(temp_base , JOB_or_GENDER) > 
+			sort_target_choice(key, JOB_or_GENDER)){
+			break;
 
-	case(JOB):
-		while (temp_base != NULL) {
-			if (temp_base->n_job > key->n_job) {
-				break;
-			}
-			insertion_point = temp_base;
-			temp_base = temp_base->p_next;
 		}
-		break;
+		insertion_point = temp_base;
+		temp_base = temp_base->p_next;
 	}
 
-	if (temp_base == NULL) {//両端　
-		if (insertion_point == NULL) {
+	if (temp_base == NULL) {
+		if (insertion_point == NULL) {//最初のデータ
 			temp_base = key;
 			temp_base->p_prev = NULL;
 			base = temp_base;
 		}
-		else {
+		else {//終端
 			insertion_point->p_next = key;
 			key->p_prev = insertion_point;
 			key->p_next = NULL;
@@ -452,7 +434,21 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 	}
 	return(base);
 }
-
+int sort_target_choice(MEMBER* client, int JOB_or_GENDER) {
+	int target ;
+	switch (JOB_or_GENDER) {
+	case GENDERS:
+		target = client->n_gender;
+		break;
+	case JOB:
+		target = client->n_job;
+		break;
+	default:
+		to_error_reaction;
+		break;
+	}
+	return(target);
+}
 
 void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {

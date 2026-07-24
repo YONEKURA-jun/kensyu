@@ -454,15 +454,6 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 }
 
 
-int sort_terget_choice(MEMBER* client, int JOB_or_GENDER) {
-	switch (JOB_or_GENDER) {
-	case GENDERS:
-		retern(client->n_gender);
-	case JOB:
-		retern(client->n_job);
-	}
-}
-
 void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {
 		delete_person(i);

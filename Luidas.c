@@ -94,7 +94,7 @@ void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 //第四弾 ソート機能の再設計、実装
 
 //:ソートを行う関数
-MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
 //:ソートの実際の処理を行う関数
 void to_member_sort(int JOB_or_GENDER);
 
@@ -387,96 +387,103 @@ void to_member_sort(int JOB_or_GENDER) {
 		temp_save = temp_key->p_next;
 		temp_key->p_next = NULL;
 		temp_key->p_prev = NULL;
-		temp_base = sort_mech(temp_base, temp_key, JOB_or_GENDER);
+		temp_base = insartion_sort(temp_base, temp_key, JOB_or_GENDER);
 		temp_key = temp_save;
 	}
 	gp_head = temp_base;
 
 }
 
-MEMBER* sort_mech(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
-	
-	MEMBER* temp_base = NULL;
-	temp_base = base;//ソート後のリストのヘッダ
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 
+	MEMBER* temp_base = NULL;
+	temp_base = base;
+	MEMBER* insertion_point = NULL;
 
 	switch (JOB_or_GENDER) {
-	case(GENDERS):
-		if (temp_base == NULL) {
+		case(GENDERS):
+			if (temp_base == NULL) {
 			temp_base = key;
 			temp_base->p_prev = NULL;
 			base = temp_base;
-		}
-		else if (temp_base != NULL) {
+			break;
+		}else {
 			while (temp_base != NULL) {
-				if (temp_base->n_gender > key->n_gender) {//負けの時
-					if (temp_base->p_prev == NULL) {
-						key->p_next = temp_base;
-						key->p_prev = NULL;
-						temp_base->p_prev = key;
-						base = key;
-						break;
-					}
-					else {
-						key->p_next = temp_base;
-						key->p_prev = temp_base->p_prev;
-						temp_base->p_prev->p_next = key;
-						temp_base->p_prev = key;
-						break;
-					}
-				}
-				else if (temp_base->p_next == NULL) {
-					temp_base->p_next = key;
-					key->p_prev = temp_base;
+				if (temp_base->n_gender > key->n_gender) {
 					break;
 				}
-
-
-
+				insertion_point = temp_base;
 				temp_base = temp_base->p_next;
 			}
 		}
-		break;
+		if (temp_base == NULL) {//mattan
+			insertion_point->p_next = key;
+			key->p_prev = insertion_point;
+			key->p_next = NULL;
 
+		}
+		else if (temp_base->p_prev == NULL) {//senntou
+			key->p_next = temp_base;
+			key->p_prev = NULL;
+			temp_base->p_prev = key;
+			base = key;
+		}
+		else{//tyukan
+			key->p_next = temp_base;
+			key->p_prev = temp_base->p_prev;
+			temp_base->p_prev->p_next = key;
+			temp_base->p_prev = key;
+
+		}
+		break;
+			
 	case(JOB):
 		if (temp_base == NULL) {
 			temp_base = key;
 			temp_base->p_prev = NULL;
 			base = temp_base;
-		}
-		else if (temp_base != NULL) {
+			break;
+		}else {
 			while (temp_base != NULL) {
-				if (temp_base->n_job > key->n_job) {//負けの時
-					if (temp_base->p_prev == NULL) {
-						key->p_next = temp_base;
-						key->p_prev = NULL;
-						temp_base->p_prev = key;
-						base = key;
-						break;
-					}
-					else {
-						key->p_next = temp_base;
-						key->p_prev = temp_base->p_prev;
-						temp_base->p_prev->p_next = key;
-						temp_base->p_prev = key;
-						break;
-					}
-				}
-				else if (temp_base->p_next == NULL) {
-					temp_base->p_next = key;
-					key->p_prev = temp_base;
+				if (temp_base->n_job > key->n_job) {
 					break;
 				}
-
-
-
+				insertion_point = temp_base;
 				temp_base = temp_base->p_next;
 			}
 		}
+		if (temp_base == NULL) {//mattan
+			insertion_point->p_next = key;
+			key->p_prev = insertion_point;
+			key->p_next = NULL;
+
+		}
+		else if (temp_base->p_prev == NULL) {//senntou
+			key->p_next = temp_base;
+			key->p_prev = NULL;
+			temp_base->p_prev = key;
+			base = key;
+		}
+		else{//tyukan
+			key->p_next = temp_base;
+			key->p_prev = temp_base->p_prev;
+			temp_base->p_prev->p_next = key;
+			temp_base->p_prev = key;
+		}
 		break;
 	}
-
 	return(base);
+}
+
+
+
+
+
+
+
+int point_check(MEMBER* insartion_point) {
+
+
 }
 
 void to_free_all_array(void) {

@@ -30,6 +30,12 @@ enum TO_CHOICE_SORT {
 	JOB,
 };
 
+enum TO_SORT_ORDER{
+	SAME,
+	ASC,
+	DESC,
+};
+
 
 typedef struct member {
 	char  sz_name[PERSON_NAME];
@@ -91,6 +97,9 @@ void to_member_sort(int sort_type);
 
 int target_gender(MEMBER* client);//比較を目的に対象の値を取り出す
 int target_job(MEMBER* client);//
+int check_size(int base, int key);//二値を比較し、結果から値をint型で返す。
+
+
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -346,7 +355,6 @@ void delete_person(int choice) {
 
 }
 
-
 void sort_member_screen() {
 	int member_check = 0;
 	member_check = member_is_enpty(g_person);
@@ -370,7 +378,6 @@ void sort_member_screen() {
 
 }
 
-
 void to_member_sort(int sort_type) {
 	MEMBER* temp_base = { NULL };
 	MEMBER* temp_key = { NULL };
@@ -389,7 +396,7 @@ void to_member_sort(int sort_type) {
 }
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
 
-	int (* choice)(MEMBER*);
+int (*choice)(MEMBER*);
 
   if (sort_type == GENDERS) {
 	  choice = target_gender;
@@ -406,7 +413,7 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
 	MEMBER* insertion_point = NULL;
 
 	while (temp_base != NULL) {
-		if (choice(temp_base) >choice(key)) {
+		if (check_size(choice(temp_base) ,choice(key)) == ASC) {
 			break;
 		}
 		insertion_point = temp_base;
@@ -438,6 +445,20 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
 		temp_base->p_prev = key;
 	}
 	return(head);
+}
+
+int check_size(int base, int key) {
+	int result = -1;
+	if (base > key) {
+		result = ASC;
+	}
+	else if (base == key) {
+		result = SAME;
+	}
+	else if (base < key) {
+		result = DESC;
+	}
+	return(result);
 }
 
 int target_gender(MEMBER* client) {

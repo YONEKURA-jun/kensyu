@@ -70,32 +70,27 @@ void sort_member_screen();//登録済みの仲間を並べ替える画面
 
 
 
-//第一弾
 //引数の番号のリストのポインタを返す関数
 MEMBER* get_member(int number);
 int very_safety_input(int lowest, int highest);//不正な入力を弾く関数
 void show_member(MEMBER* temp);//仲間ステータス閲覧関数
-
-//第二弾
 //不正な入力の際に流れるセリフの関数
 void to_error_reaction(void);
 
+
 //仲間が居ない状態での解雇・閲覧・ソートの選択を弾く。
 int member_is_enpty(int now_member);
-
-//第三弾
 void delete_person(int button);//仲間単体分メモリの開放を行う関数
 void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 
-//第四弾 ソート機能の再設計、実装
+
 //:ソート実行の為、対象リストからノードを一つずつ取り外す関数
-MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER);
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type);
 //:ソートの実際の処理を行う関数
-void to_member_sort(int JOB_or_GENDER);
-//:値で分岐してソート対象を選択する関数
-int sort_target_choice(MEMBER* client, int JOB_or_GENDER);
+void to_member_sort(int sort_type);
 
-
+int target_gender(MEMBER* client);//比較を目的に対象の値を取り出す
+int target_job(MEMBER* client);//
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -376,7 +371,7 @@ void sort_member_screen() {
 }
 
 
-void to_member_sort(int JOB_or_GENDER) {
+void to_member_sort(int sort_type) {
 	MEMBER* temp_base = { NULL };
 	MEMBER* temp_key = { NULL };
 	MEMBER* temp_save;
@@ -386,23 +381,33 @@ void to_member_sort(int JOB_or_GENDER) {
 		temp_save = temp_key->p_next;
 		temp_key->p_next = NULL;
 		temp_key->p_prev = NULL;
-		temp_base = insartion_sort(temp_base, temp_key, JOB_or_GENDER);
+		temp_base = insartion_sort(temp_base, temp_key, sort_type);
 		temp_key = temp_save;
 	}
 	gp_head = temp_base;
 
 }
-MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
+
+	int (* choice)(MEMBER*);
+
+  if (sort_type == GENDERS) {
+	  choice = target_gender;
+  }
+  else{
+	  choice = target_job;
+  }
+
 
 	MEMBER* temp_base = NULL;
 	temp_base = base;
+	MEMBER* head;
+	head = base;
 	MEMBER* insertion_point = NULL;
 
 	while (temp_base != NULL) {
-		if (sort_target_choice(temp_base , JOB_or_GENDER) > 
-			sort_target_choice(key, JOB_or_GENDER)){
+		if (choice(temp_base) >choice(key)) {
 			break;
-
 		}
 		insertion_point = temp_base;
 		temp_base = temp_base->p_next;
@@ -412,7 +417,7 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 		if (insertion_point == NULL) {//最初のデータ
 			temp_base = key;
 			temp_base->p_prev = NULL;
-			base = temp_base;
+			head = temp_base;
 		}
 		else {//終端
 			insertion_point->p_next = key;
@@ -424,7 +429,7 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 		key->p_next = temp_base;
 		key->p_prev = NULL;
 		temp_base->p_prev = key;
-		base = key;
+		head = key;
 	}
 	else {//中間
 		key->p_next = temp_base;
@@ -432,23 +437,17 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int JOB_or_GENDER) {
 		temp_base->p_prev->p_next = key;
 		temp_base->p_prev = key;
 	}
-	return(base);
+	return(head);
 }
-int sort_target_choice(MEMBER* client, int JOB_or_GENDER) {
-	int target ;
-	switch (JOB_or_GENDER) {
-	case GENDERS:
-		target = client->n_gender;
-		break;
-	case JOB:
-		target = client->n_job;
-		break;
-	default:
-		to_error_reaction;
-		break;
-	}
-	return(target);
+
+int target_gender(MEMBER* client) {
+	return(client->n_gender);
 }
+
+int target_job(MEMBER* client) {
+	return( client->n_job);
+}
+
 
 void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {

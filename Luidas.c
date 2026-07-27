@@ -97,7 +97,7 @@ void to_member_sort(int sort_type);
 
 int target_gender(MEMBER* client);//”äŠr‚ğ–Ú“I‚É‘ÎÛ‚Ì’l‚ğæ‚èo‚·
 int target_job(MEMBER* client);//
-int check_size(int base, int key);//“ñ’l‚ğ”äŠr‚µAŒ‹‰Ê‚©‚ç’l‚ğintŒ^‚Å•Ô‚·B
+int check_size(const void* base, const void* key);//“ñ’l‚ğ”äŠr‚µAŒ‹‰Ê‚©‚ç’l‚ğintŒ^‚Å•Ô‚·B
 
 
 
@@ -394,6 +394,7 @@ void to_member_sort(int sort_type) {
 	gp_head = temp_base;
 
 }
+
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
 
 int (*choice)(MEMBER*);
@@ -411,9 +412,13 @@ int (*choice)(MEMBER*);
 	MEMBER* head;
 	head = base;
 	MEMBER* insertion_point = NULL;
+	int val2 = choice(key);
+
+
 
 	while (temp_base != NULL) {
-		if (check_size(choice(temp_base) ,choice(key)) == ASC) {
+		int val1 = choice(temp_base);
+		if (check_size(&val1, &val2) == ASC) {
 			break;
 		}
 		insertion_point = temp_base;
@@ -447,19 +452,22 @@ int (*choice)(MEMBER*);
 	return(head);
 }
 
-int check_size(int base, int key) {
-	int result = -1;
-	if (base > key) {
-		result = ASC;
+int check_size(const void* base, const void* key) {
+
+	int val_base = *(const int*)base;
+	int val_key = *(const int*)key;
+
+	if (val_base > val_key) {
+		return ASC;
 	}
-	else if (base == key) {
-		result = SAME;
+	else if (val_base == val_key) {
+		return SAME;
 	}
-	else if (base < key) {
-		result = DESC;
+	else {
+		return DESC;
 	}
-	return(result);
 }
+
 
 int target_gender(MEMBER* client) {
 	return(client->n_gender);
@@ -492,7 +500,7 @@ int member_is_enpty(int now_member) {
 MEMBER* get_member(int number) {
 	MEMBER* now_point = { NULL };
 	now_point = gp_head;
-	if (number > g_person || number < 0) {
+	if (number >= g_person || number < 0) {
 		now_point = NULL;
 	}
 

@@ -30,13 +30,6 @@ enum TO_CHOICE_SORT {
 	JOB,
 };
 
-enum TO_SORT_ORDER{
-	SAME,
-	ASC,
-	DESC,
-};
-
-
 typedef struct member {
 	char  sz_name[PERSON_NAME];
 	int  n_gender;
@@ -91,13 +84,13 @@ void to_free_all_array(void);//全仲間分の取得したメモリの開放関数
 
 
 //:ソート実行の為、対象リストからノードを一つずつ取り外す関数
-MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type);
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, bool(*compare_member)(MEMBER*, MEMBER*));
 //:ソートの実際の処理を行う関数
 void to_member_sort(int sort_type);
 
-int target_gender(MEMBER* client);//比較を目的に対象の値を取り出す
-int target_job(MEMBER* client);//
-int check_size(const void* base, const void* key);//二値を比較し、結果から値をint型で返す。
+bool target_gender(MEMBER* base, MEMBER* key);//比較を目的に対象の値を取り出す
+bool target_job(MEMBER* base, MEMBER* key);//
+
 
 
 
@@ -384,41 +377,40 @@ void to_member_sort(int sort_type) {
 	MEMBER* temp_save;
 
 	temp_key = gp_head;
+
+	bool (*sort_target)(MEMBER*, MEMBER*) = NULL;
+	switch (sort_type) {
+	case GENDERS:
+		sort_target = target_gender;
+		break;
+	case JOB:
+		sort_target = target_job;
+		break;
+	}
+
+
 	while (temp_key != NULL) {
 		temp_save = temp_key->p_next;
 		temp_key->p_next = NULL;
 		temp_key->p_prev = NULL;
-		temp_base = insartion_sort(temp_base, temp_key, sort_type);
+		temp_base = insartion_sort(temp_base, temp_key, sort_target);
 		temp_key = temp_save;
 	}
 	gp_head = temp_base;
-
 }
 
-MEMBER* insartion_sort(MEMBER* base, MEMBER* key, int sort_type) {
 
-int (*choice)(MEMBER*);
-
-  if (sort_type == GENDERS) {
-	  choice = target_gender;
-  }
-  else{
-	  choice = target_job;
-  }
-
+MEMBER* insartion_sort(MEMBER* base, MEMBER* key, bool(*compare_member)(MEMBER*, MEMBER*)) {
 
 	MEMBER* temp_base = NULL;
 	temp_base = base;
 	MEMBER* head;
 	head = base;
 	MEMBER* insertion_point = NULL;
-	int val2 = choice(key);
-
 
 
 	while (temp_base != NULL) {
-		int val1 = choice(temp_base);
-		if (check_size(&val1, &val2) == ASC) {
+		if (compare_member(temp_base, key) == true) {
 			break;
 		}
 		insertion_point = temp_base;
@@ -452,29 +444,12 @@ int (*choice)(MEMBER*);
 	return(head);
 }
 
-int check_size(const void* base, const void* key) {
-
-	int val_base = *(const int*)base;
-	int val_key = *(const int*)key;
-
-	if (val_base > val_key) {
-		return ASC;
-	}
-	else if (val_base == val_key) {
-		return SAME;
-	}
-	else {
-		return DESC;
-	}
+bool target_gender(MEMBER* base, MEMBER* key) {
+	return(base->n_gender > key->n_gender);
 }
 
-
-int target_gender(MEMBER* client) {
-	return(client->n_gender);
-}
-
-int target_job(MEMBER* client) {
-	return( client->n_job);
+bool target_job(MEMBER* base, MEMBER* key) {
+	return(base->n_job > key->n_job);
 }
 
 

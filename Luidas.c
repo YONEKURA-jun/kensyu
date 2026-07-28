@@ -18,11 +18,17 @@ enum CHOICE {
 	WELCOM,
 	DELETE,
 	SORT,
+	SAVE_LOAD,
 };
 
 enum CHOICE_UNIT {
 	SINGLE_UNIT,
 	ALL_UNIT,
+};
+
+enum CHOICE_SAVE_LOAD {
+	SAVE,
+	LOAD,
 };
 
 enum TO_CHOICE_SORT {
@@ -66,7 +72,7 @@ void add_members_screen();//仲間追加画面
 void show_member_screen();//登録済仲間ライブラリ閲覧の画面
 void delete_parties_screen(); //仲間解雇の画面
 void sort_member_screen();//登録済みの仲間を並べ替える画面
-
+void save_load_screen();//現在データの保存及び保存済みデータの読込画面
 
 
 //引数の番号のリストのポインタを返す関数
@@ -94,6 +100,8 @@ bool target_job(MEMBER* base, MEMBER* key);//
 bool(*target_list(int sort_type))(MEMBER*, MEMBER*);
 
 
+void to_save_member();//現在のリストの中身を保存する
+void to_load_member();//保存されているデータを読み込んでノードを作成する
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -120,6 +128,10 @@ int main(void) {
 			sort_member_screen();
 			break;
 
+		case SAVE_LOAD:
+			save_load_screen();
+			break;
+
 		default:
 			end_game_flag = 1;
 			to_free_all_array();
@@ -138,6 +150,7 @@ int  show_start_screen(int button) {
 	printf("1:仲間の追加\n");
 	printf("2:仲間の削除\n");
 	printf("3:仲間をソート\n");
+	printf("4:セーブ/ロードする\n");
 	printf("上記以外:終了\n");
 
 	scanf_s("%d", &button);
@@ -391,7 +404,6 @@ void to_member_sort(int sort_type) {
 	gp_head = temp_base;
 }
 
-
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, bool(*compare_member)(MEMBER*, MEMBER*)) {
 
 	MEMBER* temp_base = NULL;
@@ -456,6 +468,95 @@ bool(*target_list(int sort_type))(MEMBER*, MEMBER*) {
 	}
 	return(target);
 }
+
+void save_load_screen() {
+
+	int button = INPUT_FAILED;
+
+	printf("どうする？\n");
+	printf("\n");
+	printf("0:セーブする\n");
+	printf("1:ロードする\n");
+	printf("上記以外:やっぱり辞める\n");
+
+	button = very_safety_input(SAVE, LOAD);
+	if (button == INPUT_FAILED) {
+		return;
+	}
+	switch (button) {
+	case SAVE:
+		to_save_member();
+		break;
+	case LOAD:
+		to_load_member();
+		break;
+	}
+}
+
+void to_save_member() {
+	FILE* fp = NULL;
+	MEMBER* temp_base = gp_head;
+	if (fopen_s(&fp, "save_one.txt", "w") != 0) {
+		to_error_reaction();
+		return;
+	}
+	for (int i = 0; i < g_person; i++) {
+		fprintf(fp,"%s, %d, %d\n", temp_base->sz_name, temp_base->n_gender, temp_base->n_job);
+		temp_base = temp_base->p_next;
+	}
+	fclose(fp);
+}
+
+void to_load_member() {
+	to_free_all_array();
+	g_person = 0;
+
+	FILE* fp;
+	if (fopen_s(&fp, "save_one.txt", "r") != 0) {
+		to_error_reaction();
+		return;
+	}
+
+
+	char check_names[PERSON_NAME] = { 0 };
+	int gender = INPUT_FAILED;
+	int job = INPUT_FAILED;
+	int check_failed = INPUT_FAILED;
+
+	MEMBER* p_new_member;
+	
+	while (fscanf_s(fp, " %[^,], %d, %d", check_names, PERSON_NAME, &gender, &job) == 3) {
+
+		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
+		if (p_new_member == NULL) {
+			printf("メモリの確保に失敗した");
+			return;
+		}
+
+
+		strcpy_s(p_new_member->sz_name, PERSON_NAME, check_names);
+		p_new_member->n_gender = gender;
+		p_new_member->n_job = job;
+
+		if (g_person == 0) {
+			p_new_member->p_next = NULL;
+			p_new_member->p_prev = NULL;
+
+			gp_head = p_new_member;
+		}
+		else {
+			MEMBER* p_end = get_member(g_person - 1);
+
+			p_new_member->p_next = NULL;
+			p_new_member->p_prev = p_end;
+
+			p_end->p_next = p_new_member;
+		}
+		g_person++;
+	}
+	fclose(fp);
+}
+
 
 
 

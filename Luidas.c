@@ -90,7 +90,8 @@ void to_member_sort(int sort_type);
 
 bool target_gender(MEMBER* base, MEMBER* key);//比較を目的に対象の値を取り出す
 bool target_job(MEMBER* base, MEMBER* key);//
-
+//入力された値に対応して、ソートの対象を取り出す為の関数を選ぶ。
+bool(*target_list(int sort_type))(MEMBER*, MEMBER*);
 
 
 
@@ -377,17 +378,8 @@ void to_member_sort(int sort_type) {
 	MEMBER* temp_save;
 
 	temp_key = gp_head;
-
 	bool (*sort_target)(MEMBER*, MEMBER*) = NULL;
-	switch (sort_type) {
-	case GENDERS:
-		sort_target = target_gender;
-		break;
-	case JOB:
-		sort_target = target_job;
-		break;
-	}
-
+	sort_target = target_list(sort_type);
 
 	while (temp_key != NULL) {
 		temp_save = temp_key->p_next;
@@ -451,6 +443,20 @@ bool target_gender(MEMBER* base, MEMBER* key) {
 bool target_job(MEMBER* base, MEMBER* key) {
 	return(base->n_job > key->n_job);
 }
+
+bool(*target_list(int sort_type))(MEMBER*, MEMBER*) {
+	bool (*target)(MEMBER*, MEMBER*) = NULL;
+	switch (sort_type) {
+	case GENDERS:
+		target = target_gender;
+		break;
+	case JOB:
+		target = target_job;
+		break;
+	}
+	return(target);
+}
+
 
 
 void to_free_all_array(void) {

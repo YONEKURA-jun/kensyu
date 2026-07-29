@@ -514,15 +514,14 @@ void to_load_member() {
 		to_error_reaction();
 		return;
 	}
-
-
 	char check_names[PERSON_NAME] = { 0 };
 	int gender = INPUT_FAILED;
 	int job = INPUT_FAILED;
 	int check_failed = INPUT_FAILED;
 
-	MEMBER* p_new_member;
-	
+	MEMBER* p_new_member=NULL;
+	MEMBER* temp_tail=NULL;
+
 	while (fscanf_s(fp, " %[^,], %d, %d", check_names, PERSON_NAME, &gender, &job) == 3) {
 
 		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
@@ -530,27 +529,23 @@ void to_load_member() {
 			printf("ƒƒ‚ƒŠ‚ÌŠm•Û‚ÉŽ¸”s‚µ‚½");
 			break;
 		}
-
-
 		strcpy_s(p_new_member->sz_name, PERSON_NAME, check_names);
 		p_new_member->n_gender = gender;
 		p_new_member->n_job = job;
+		
 
-		if (g_person == 0) {
+		if (g_person == NULL) {
 			p_new_member->p_next = NULL;
 			p_new_member->p_prev = NULL;
-
 			gp_head = p_new_member;
+			temp_tail = p_new_member;
+
 		}
 		else {
-			MEMBER* temp_head = gp_head;
-			for (int i = 1; i < g_person; i++) {
-				temp_head = temp_head->p_next;
-			}
-		
-			temp_head->p_next = p_new_member;
+			temp_tail->p_next = p_new_member;
 			p_new_member->p_next = NULL;
-			p_new_member->p_prev = temp_head;
+			p_new_member->p_prev = temp_tail;
+			temp_tail = p_new_member;
 		}
 		g_person++;
 	}

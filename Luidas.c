@@ -333,7 +333,6 @@ void delete_parties_screen() {
 
 	case ALL_UNIT:
 		to_free_all_array();
-		g_person = 0;
 		break;
 
 	default:
@@ -509,8 +508,7 @@ void to_save_member() {
 
 void to_load_member() {
 	to_free_all_array();
-	g_person = 0;
-
+	
 	FILE* fp;
 	if (fopen_s(&fp, "save_one.txt", "r") != 0) {
 		to_error_reaction();
@@ -530,7 +528,7 @@ void to_load_member() {
 		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
 		if (p_new_member == NULL) {
 			printf("メモリの確保に失敗した");
-			return;
+			break;
 		}
 
 
@@ -545,12 +543,14 @@ void to_load_member() {
 			gp_head = p_new_member;
 		}
 		else {
-			MEMBER* p_end = get_member(g_person - 1);
-
+			MEMBER* temp_head = gp_head;
+			for (int i = 1; i < g_person; i++) {
+				temp_head = temp_head->p_next;
+			}
+		
+			temp_head->p_next = p_new_member;
 			p_new_member->p_next = NULL;
-			p_new_member->p_prev = p_end;
-
-			p_end->p_next = p_new_member;
+			p_new_member->p_prev = temp_head;
 		}
 		g_person++;
 	}
@@ -564,10 +564,11 @@ void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {
 		delete_person(i);
 	}
+	g_person = 0;
 }
 
 void to_error_reaction(void) {
-	printf("不正な入力だ、調子が悪い様だな、戻ろう\n");
+	printf("調子が悪い様だ、戻ろう\n");
 	printf("\n");
 }
 

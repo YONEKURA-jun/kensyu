@@ -500,9 +500,9 @@ void to_save_member() {
 		return;
 	}
 	for (int i = 0; i < g_person; i++) {
-		fwrite(temp_base->sz_name, sizeof(char[PERSON_NAME]), 1, fp);
-		fwrite(&temp_base->n_gender, sizeof(int), 1, fp);
-		fwrite(&temp_base->n_job, sizeof(int), 1, fp);
+		fwrite(temp_base->sz_name, sizeof(temp_base->sz_name), 1, fp);
+		fwrite(&temp_base->n_gender, sizeof(temp_base->n_gender), 1, fp);
+		fwrite(&temp_base->n_job, sizeof(temp_base->n_job), 1, fp);
 		temp_base = temp_base->p_next;
 	}
 	fclose(fp);
@@ -521,11 +521,11 @@ void to_load_member() {
 	MEMBER* temp_tail = NULL;
 	MEMBER temp = { NULL };
 
-	while ((fread(temp.sz_name, sizeof(char[PERSON_NAME]), 1, fp) == 1)
+	while ((fread(temp.sz_name, sizeof(temp.sz_name), 1, fp) == 1)
 		&&
-		(fread(&temp.n_gender, sizeof(int), 1, fp) == 1)
+		(fread(&temp.n_gender, sizeof(temp.n_gender), 1, fp) == 1)
 		&&
-		(fread(&temp.n_job, sizeof(int), 1, fp) == 1))
+		(fread(&temp.n_job, sizeof(temp.n_job), 1, fp) == 1))
 	{
 		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
 		if (p_new_member == NULL) {
@@ -554,9 +554,6 @@ void to_load_member() {
 	}
 	fclose(fp);
 }
-
-
-
 
 void to_free_all_array(void) {
 	for (int i = g_person; i > 0; i--) {
@@ -609,4 +606,8 @@ int very_safety_input(int lowest, int highest) {
 		button = INPUT_FAILED;
 	}
 	return(button);
+}
+
+MEMBER* temp_bogo_sort(){
+
 }

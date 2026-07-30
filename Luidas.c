@@ -500,7 +500,9 @@ void to_save_member() {
 		return;
 	}
 	for (int i = 0; i < g_person; i++) {
-		fwrite(temp_base, sizeof(MEMBER), 1,fp);
+		fwrite(temp_base->sz_name, sizeof(char[PERSON_NAME]), 1, fp);
+		fwrite(&temp_base->n_gender, sizeof(int), 1, fp);
+		fwrite(&temp_base->n_job, sizeof(int), 1, fp);
 		temp_base = temp_base->p_next;
 	}
 	fclose(fp);
@@ -508,7 +510,7 @@ void to_save_member() {
 
 void to_load_member() {
 	to_free_all_array();
-	
+
 	FILE* fp;
 	if (fopen_s(&fp, "save_one.txt", "rb") != 0) {
 		to_error_reaction();
@@ -517,30 +519,38 @@ void to_load_member() {
 
 	MEMBER* p_new_member = NULL;
 	MEMBER* temp_tail = NULL;
-	MEMBER temp_base;
-	
-	while (fread(&temp_base,sizeof(MEMBER),1,fp) == 1) {
+	MEMBER temp = { NULL };
 
+	while ((fread(temp.sz_name, sizeof(char[PERSON_NAME]), 1, fp) == 1)
+		&&
+		(fread(&temp.n_gender, sizeof(int), 1, fp) == 1)
+		&&
+		(fread(&temp.n_job, sizeof(int), 1, fp) == 1))
+	{
 		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
 		if (p_new_member == NULL) {
-			printf("メモリの確保に失敗した");
+			printf("メモリの確保に失敗した\n");
 			break;
 		}
-		*p_new_member = temp_base;
+		*p_new_member = temp;
 
-		if (g_person == 0) {	
-			p_new_member->p_next = NULL;
+		if (g_person == 0) {
 			p_new_member->p_prev = NULL;
 			gp_head = p_new_member;
 		}
 		else {
 			temp_tail->p_next = p_new_member;
-			p_new_member->p_next = NULL;
 			p_new_member->p_prev = temp_tail;
 		}
-		
+		p_new_member->p_next = NULL;
 		temp_tail = p_new_member;
 		g_person++;
+	}
+	if (feof(fp) == 0) {
+		printf("ファイルの読込が途中で失敗した、何かおかしいようだ\n");
+	}
+	else {
+		printf("全員連れて来たぞ\n");
 	}
 	fclose(fp);
 }
@@ -561,11 +571,13 @@ void to_error_reaction(void) {
 }
 
 int member_is_enpty(int now_member) {
+	int temp = 0;
 	if (now_member == 0) {
 		printf("誰も仲間がいないようだ\n");
 		printf("\n");
-		return(INPUT_FAILED);
+		temp = INPUT_FAILED;
 	}
+	return(temp);
 }
 
 MEMBER* get_member(int number) {

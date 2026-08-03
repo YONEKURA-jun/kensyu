@@ -11,6 +11,8 @@
 #define WORK 6
 #define GENDER 2
 #define INPUT_FAILED -1
+#define SAVE_TITLE 11
+#define SAVE_PATH 15
 
 enum CHOICE {
 	LIBRARY,
@@ -26,10 +28,8 @@ enum CHOICE_UNIT {
 };
 
 enum SAVE_LOAD {
-	SAVE = 0,
-	LOAD = 1,
-	SAVE_TITLE = 11,
-	SAVE_PATH = 15,
+	SAVE,
+	LOAD,
 };
 
 enum TO_CHOICE_SORT {
@@ -469,7 +469,6 @@ bool(*target_list(int sort_type))(MEMBER*, MEMBER*) {
 }
 
 void save_load_screen() {
-
 	int button = INPUT_FAILED;
 
 	printf("どうする？\n");
@@ -493,33 +492,39 @@ void save_load_screen() {
 }
 
 void to_save_member() {
+	int member_check = 0;
+	member_check = member_is_enpty(g_person);
+	if (member_check == INPUT_FAILED) {
+		return;
+	}
+	
 	FILE* fp = NULL;
 	MEMBER* temp_base = gp_head;
 	char save_slot[SAVE_TITLE] = { 0 };
 	char save_path[SAVE_PATH] = { 0 };
 	int check_failed = INPUT_FAILED;
-
+	int max_title_size = SAVE_TITLE - 1;
 
 	printf("セーブデータの名前を入力してくれ\n");
 	check_failed = scanf_s("%s", save_slot, SAVE_TITLE);
 	rewind(stdin);
 	if (check_failed != 1) {
-		printf("ひらがなで５文字、英語か数字なら１０文字だ\n");
+		printf("ひらがなで%d文字、英語か数字なら%d文字だ\n",max_title_size/2, max_title_size);
 		return;
 	}
 
-	if (fopen_s(&fp, "Memory_Card.txt", "ab") != 0) {
-		to_error_reaction();
+	if (fopen_s(&fp, "Memory_Card.txt", "a") != 0) {
+		printf("メモリーカードへの書き込みに失敗した");
 		return;
 	}
 
 	sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
-	fprintf(fp, "%s\n", save_path);
+	fprintf(fp,"%s", save_path);
 	fclose(fp);
 
 
 	if (fopen_s(&fp, save_path, "wb") != 0) {
-		to_error_reaction();
+		printf("実際のファイルを開くことに失敗した");
 		return;
 	}
 	for (int i = 0; i < g_person; i++) {
@@ -532,10 +537,39 @@ void to_save_member() {
 }
 
 void to_load_member() {
-	to_free_all_array();
+	char save_path[SAVE_PATH] = { 0 };
+	int count = 0;
+	int max_count;
 
 	FILE* fp;
-	if (fopen_s(&fp, "save_one.txt", "rb") != 0) {
+	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+		to_error_reaction();
+		return;
+	}
+	printf("\n");
+	while (fgets(save_path, sizeof(save_path), fp) != NULL) {
+		count++;
+		printf("%d : %s\n", count, save_path);
+	}
+	if (count == 0) {
+		printf("セーブデータが無い様だ、戻るぞ");
+		return;
+	}
+	max_count = count;
+	printf("全部で %d 組のパーティが記録されている、何番目のパーティを連れてくる？\n", count);
+	count = very_safety_input(1, max_count);
+	if (count == INPUT_FAILED) {
+		to_error_reaction();
+		return;
+	}
+	for (int target = 1; target <= count; target++) {
+		fgets(save_path, sizeof(save_path), fp);
+	}
+
+
+
+	to_free_all_array();
+	if (fopen_s(&fp, save_path, "rb") != 0) {
 		to_error_reaction();
 		return;
 	}
@@ -573,7 +607,7 @@ void to_load_member() {
 		printf("ファイルの読込が途中で失敗した、何かおかしいようだ\n");
 	}
 	else {
-		printf("全員連れて来たぞ\n");
+		printf("連れて来たぞ\n");
 	}
 	fclose(fp);
 }

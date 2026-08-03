@@ -12,7 +12,6 @@
 #define GENDER 2
 #define INPUT_FAILED -1
 
-
 enum CHOICE {
 	LIBRARY,
 	WELCOM,
@@ -26,9 +25,11 @@ enum CHOICE_UNIT {
 	ALL_UNIT,
 };
 
-enum CHOICE_SAVE_LOAD {
-	SAVE,
-	LOAD,
+enum SAVE_LOAD {
+	SAVE = 0,
+	LOAD = 1,
+	SAVE_TITLE = 11,
+	SAVE_PATH = 15,
 };
 
 enum TO_CHOICE_SORT {
@@ -167,7 +168,6 @@ void add_members_screen(void) {
 	int gender = INPUT_FAILED;
 	int job = INPUT_FAILED;
 	int check_failed = INPUT_FAILED;
-
 
 	printf("仲間の名前を教えて下さい\n");
 
@@ -495,7 +495,30 @@ void save_load_screen() {
 void to_save_member() {
 	FILE* fp = NULL;
 	MEMBER* temp_base = gp_head;
-	if (fopen_s(&fp, "save_one.txt", "wb") != 0) {
+	char save_slot[SAVE_TITLE] = { 0 };
+	char save_path[SAVE_PATH] = { 0 };
+	int check_failed = INPUT_FAILED;
+
+
+	printf("セーブデータの名前を入力してくれ\n");
+	check_failed = scanf_s("%s", save_slot, SAVE_TITLE);
+	rewind(stdin);
+	if (check_failed != 1) {
+		printf("ひらがなで５文字、英語か数字なら１０文字だ\n");
+		return;
+	}
+
+	if (fopen_s(&fp, "Memory_Card.txt", "ab") != 0) {
+		to_error_reaction();
+		return;
+	}
+
+	sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
+	fprintf(fp, "%s\n", save_path);
+	fclose(fp);
+
+
+	if (fopen_s(&fp, save_path, "wb") != 0) {
 		to_error_reaction();
 		return;
 	}
@@ -607,7 +630,86 @@ int very_safety_input(int lowest, int highest) {
 	}
 	return(button);
 }
+/*
+void temp_bogo_sort(int target) {
+	MEMBER* temp;
+	MEMBER* bogo_head;
+	MEMBER* bogo_tail;
+	MEMBER* check_head;
 
-MEMBER* temp_bogo_sort(){
+	int* Bingo_Card = (int*)calloc(g_person, sizeof(int));
+	bool Bingo = false;
+	srand((unsigned int)time(NULL));
 
-}
+	while (Bingo == false) {
+		temp = NULL;
+		bogo_head = NULL;
+		bogo_tail = NULL;
+		check_head = NULL;
+
+		int try = 0;
+		int balls = g_person;
+
+
+		for (int i = 0; i < g_person; i++) {
+			Bingo_Card[i] = i;
+		}
+
+
+		while (try < g_person) {
+			int Bingo_Ball = rand() % balls;
+			int lottery = Bingo_Card[Bingo_Ball];
+			temp = gp_head;
+
+			for (int i = 0; i < Bingo_Ball; i++) {
+				temp = temp->p_next;
+			}
+			if (bogo_head == NULL) {
+				bogo_head = temp;
+				bogo_tail = temp;
+				temp->p_next = NULL;
+				temp->p_prev = NULL;
+			}
+			else {
+				bogo_tail->p_next = temp;
+				temp->p_prev = bogo_tail;
+				temp->p_next = NULL;
+				bogo_tail = temp;
+			}
+			try++;
+			Bingo_Card[Bingo_Ball] = Bingo_Card[balls - 1];
+			balls--;
+		}
+		check_head = bogo_head;
+
+		switch (target) {
+		case GENDERS:
+			for (int check = 0; check < g_person - 1; check++) {
+				if (check_head->n_gender > check_head->p_next->n_gender) {
+					break;
+				}
+				check_head = check_head->p_next;
+			}
+			if (check_head->p_next == NULL) {
+				Bingo = true;
+
+			}
+			break;
+		case JOB:
+			for (int check = 0; check < g_person - 1; check++) {
+				if (check_head->n_job > check_head->p_next->n_job) {
+					break;
+				}
+				check_head = check_head->p_next;
+
+			}
+			if (check_head->p_next == NULL) {
+				Bingo = true;
+			}
+			break;
+		}
+
+	}
+	free(Bingo_Card);
+	gp_head = bogo_head;
+}*/

@@ -13,6 +13,7 @@
 #define INPUT_FAILED -1
 #define SAVE_TITLE 11
 #define SAVE_PATH 15
+#define NEW_DATA -1
 
 enum CHOICE {
 	LIBRARY,
@@ -497,35 +498,79 @@ void to_save_member() {
 	if (member_check == INPUT_FAILED) {
 		return;
 	}
-	
+
 	FILE* fp = NULL;
 	MEMBER* temp_base = gp_head;
 	char save_slot[SAVE_TITLE] = { 0 };
 	char save_path[SAVE_PATH] = { 0 };
 	int check_failed = INPUT_FAILED;
 	int max_title_size = SAVE_TITLE - 1;
+	int count = 0;
+	int max_count;
+	int temp_choice = 0;
 
-	printf("セーブデータの名前を入力してくれ\n");
-	check_failed = scanf_s("%s", save_slot, SAVE_TITLE);
-	rewind(stdin);
-	if (check_failed != 1) {
-		printf("ひらがなで%d文字、英語か数字なら%d文字だ\n",max_title_size/2, max_title_size);
+
+
+	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+		to_error_reaction();
 		return;
 	}
-
-	if (fopen_s(&fp, "Memory_Card.txt", "a") != 0) {
-		printf("メモリーカードへの書き込みに失敗した");
-		return;
+	printf("\n");
+	while (fgets(save_path, sizeof(save_path), fp) != NULL) {
+		count++;
+		save_path[strcspn(save_path, "\r\n")] = '\0';
+		printf("%d:%s\n", count, save_path);
 	}
-
-	sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
-	fprintf(fp,"%s", save_path);
 	fclose(fp);
+	max_count = count;
 
-
-	if (fopen_s(&fp, save_path, "wb") != 0) {
-		printf("実際のファイルを開くことに失敗した");
-		return;
+	if (count == 0) {
+		temp_choice == 0;
+	}
+	else {
+		printf("上記以外:新規作成\n");
+		printf("上書セーブか新規作成を選んでくれ\n");
+		int button = scanf_s("%d", &temp_choice);
+		rewind(stdin);
+		if (button == INPUT_FAILED) {
+			to_error_reaction();
+			return;
+		}
+	}
+	if (1 <= temp_choice && temp_choice <= max_count) {
+		printf("上書セーブだな？\n");
+		if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+			to_error_reaction();
+			return;
+		}
+		for (int target = 1; target < temp_choice; target++) {
+			fgets(save_path, sizeof(save_path), fp);
+		}
+		fclose(fp);
+		if (fopen_s(&fp, save_path, "wb") != 0) {
+			printf("実際のファイルを開くことに失敗した");
+			return;
+		}
+	}
+	else if (temp_choice < 1 || max_count < temp_choice) {
+		printf("セーブデータの名前を入力してくれ\n");
+		check_failed = scanf_s("%s", save_slot, SAVE_TITLE);
+		rewind(stdin);
+		if (check_failed != 1) {
+			printf("ひらがなで%d文字、英語か数字なら%d文字だ\n", max_title_size / 2, max_title_size);
+			return;
+		}
+		if (fopen_s(&fp, "Memory_Card.txt", "ab") != 0) {
+			printf("メモリーカードへの書き込みに失敗した\n");
+			return;
+		}
+		sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
+		fprintf(fp, "%s\n", save_path);
+		fclose(fp);
+		if (fopen_s(&fp, save_path, "wb") != 0) {
+			printf("実際のファイルを開くことに失敗した\n");
+			return;
+		}
 	}
 	for (int i = 0; i < g_person; i++) {
 		fwrite(temp_base->sz_name, sizeof(temp_base->sz_name), 1, fp);
@@ -549,25 +594,28 @@ void to_load_member() {
 	printf("\n");
 	while (fgets(save_path, sizeof(save_path), fp) != NULL) {
 		count++;
-		printf("%d : %s\n", count, save_path);
+		save_path[strcspn(save_path, "\r\n")] = '\0';
+		printf("%d . %s\n", count, save_path);
 	}
 	if (count == 0) {
-		printf("セーブデータが無い様だ、戻るぞ");
+		printf("セーブデータが無い様だ、戻るぞ\n");
 		return;
 	}
+	rewind(fp);
 	max_count = count;
 	printf("全部で %d 組のパーティが記録されている、何番目のパーティを連れてくる？\n", count);
 	count = very_safety_input(1, max_count);
 	if (count == INPUT_FAILED) {
+		fclose(fp);
 		to_error_reaction();
 		return;
 	}
-	for (int target = 1; target <= count; target++) {
+	
+	for (int target = 0; target < count; target++) {
 		fgets(save_path, sizeof(save_path), fp);
 	}
-
-
-
+	save_path[strcspn(save_path, "\r\n")] = '\0';
+    fclose(fp);
 	to_free_all_array();
 	if (fopen_s(&fp, save_path, "rb") != 0) {
 		to_error_reaction();
@@ -620,7 +668,7 @@ void to_free_all_array(void) {
 }
 
 void to_error_reaction(void) {
-	printf("調子が悪い様だ、戻ろう\n");
+	printf("調子が悪い様だな、戻ろう\n");
 	printf("\n");
 }
 
@@ -658,7 +706,7 @@ int very_safety_input(int lowest, int highest) {
 	int scan_check = (input_check != 1);
 	int numbers_check = (button < lowest || button > highest);
 
-	//scanf_sが不正な入力だった時
+
 	if (scan_check || numbers_check) {
 		button = INPUT_FAILED;
 	}

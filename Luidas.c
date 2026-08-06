@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-
+#include <errno.h>
 
 
 #define PERSON_NAME 41
@@ -104,6 +104,12 @@ bool(*target_list(int sort_type))(MEMBER*, MEMBER*);
 
 void to_save_member();//現在のリストの中身を保存する
 void to_load_member();//保存されているデータを読み込んでノードを作成する
+
+int show_Memory_Card();//Memory_Cardフォルダの中身を一覧表示する
+void check_error_fnf();//ファイル喪失時にMemory_Cardフォルダの中身からpathを削除する
+
+
+
 
 int main(void) {
 	bool end_game_flag = 0;
@@ -505,27 +511,13 @@ void to_save_member() {
 	char save_path[SAVE_PATH] = { 0 };
 	int check_failed = INPUT_FAILED;
 	int max_title_size = SAVE_TITLE - 1;
-	int count = 0;
-	int max_count;
+	int max_count = 0;
 	int temp_choice = 0;
 
 
-
-	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
-		to_error_reaction();
-		return;
-	}
-	printf("\n");
-	while (fgets(save_path, sizeof(save_path), fp) != NULL) {
-		count++;
-		save_path[strcspn(save_path, "\r\n")] = '\0';
-		printf("%d:%s\n", count, save_path);
-	}
-	fclose(fp);
-	max_count = count;
-
-	if (count == 0) {
-		temp_choice == 0;
+	max_count = show_Memory_Card();
+	if (max_count == 0) {
+		temp_choice = 0;
 	}
 	else {
 		printf("上記以外:新規作成\n");
@@ -547,10 +539,6 @@ void to_save_member() {
 			fgets(save_path, sizeof(save_path), fp);
 		}
 		fclose(fp);
-		if (fopen_s(&fp, save_path, "wb") != 0) {
-			printf("実際のファイルを開くことに失敗した");
-			return;
-		}
 	}
 	else if (temp_choice < 1 || max_count < temp_choice) {
 		printf("セーブデータの名前を入力してくれ\n");
@@ -567,10 +555,12 @@ void to_save_member() {
 		sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
 		fprintf(fp, "%s\n", save_path);
 		fclose(fp);
-		if (fopen_s(&fp, save_path, "wb") != 0) {
-			printf("実際のファイルを開くことに失敗した\n");
-			return;
-		}
+
+	}
+
+	if (fopen_s(&fp, save_path, "wb") != 0) {
+		printf("実際のファイルを開くことに失敗した\n");
+		return;
 	}
 	for (int i = 0; i < g_person; i++) {
 		fwrite(temp_base->sz_name, sizeof(temp_base->sz_name), 1, fp);
@@ -585,42 +575,35 @@ void to_load_member() {
 	char save_path[SAVE_PATH] = { 0 };
 	int count = 0;
 	int max_count;
-
 	FILE* fp;
+
+	max_count = show_Memory_Card();
+	if (max_count == 0) {
+		return;
+	}
+
+	printf("全部で %d 組のパーティが記録されている、何番目のパーティを連れてくる？\n", max_count);
+	count = very_safety_input(1, max_count);
+	if (count == INPUT_FAILED) {
+		to_error_reaction();
+		return;
+	}
 	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
 		to_error_reaction();
 		return;
 	}
-	printf("\n");
-	while (fgets(save_path, sizeof(save_path), fp) != NULL) {
-		count++;
-		save_path[strcspn(save_path, "\r\n")] = '\0';
-		printf("%d . %s\n", count, save_path);
-	}
-	if (count == 0) {
-		printf("セーブデータが無い様だ、戻るぞ\n");
-		return;
-	}
-	rewind(fp);
-	max_count = count;
-	printf("全部で %d 組のパーティが記録されている、何番目のパーティを連れてくる？\n", count);
-	count = very_safety_input(1, max_count);
-	if (count == INPUT_FAILED) {
-		fclose(fp);
-		to_error_reaction();
-		return;
-	}
-	
 	for (int target = 0; target < count; target++) {
 		fgets(save_path, sizeof(save_path), fp);
 	}
 	save_path[strcspn(save_path, "\r\n")] = '\0';
-    fclose(fp);
-	to_free_all_array();
+	fclose(fp);
+
+	
 	if (fopen_s(&fp, save_path, "rb") != 0) {
-		to_error_reaction();
+		check_error_fnf(count, max_count);
 		return;
 	}
+	to_free_all_array();
 
 	MEMBER* p_new_member = NULL;
 	MEMBER* temp_tail = NULL;
@@ -712,6 +695,64 @@ int very_safety_input(int lowest, int highest) {
 	}
 	return(button);
 }
+
+int show_Memory_Card() {
+	FILE* fp;
+	char temp_path[SAVE_PATH] = { 0 };
+	int temp_count = 0;
+	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+		to_error_reaction();
+		return;
+	}
+	printf("\n");
+	while (fgets(temp_path, sizeof(temp_path),fp) !=NULL) {
+		temp_count++;
+		temp_path[strcspn(temp_path, "\r\n")] = '\0';
+		printf("%d . %s\n", temp_count, temp_path);
+	}
+	if (temp_count == 0) {
+		printf("セーブデータが無い様だな\n");
+	}
+	rewind(fp);
+	fclose(fp);
+	return(temp_count);
+}
+
+void check_error_fnf(int choice, int max_count) {
+	int temp_check = 0;
+	char save_path[SAVE_PATH] = { 0 };
+	FILE* base = NULL;
+	FILE* copy = NULL;
+
+	temp_check = errno;
+	if (temp_check != ENOENT) {
+		return;
+	}
+	else {
+		printf("恐ろしい事に選択したぼうけんの書は消えてしまった様だ\n");
+		if (fopen_s(&base, "Memory_Card.txt", "rb") != 0 ||
+			fopen_s(&copy, "Copy_Card.txt", "wb") != 0) {
+			if (base != NULL) { fclose(base); }
+			if (copy != NULL) { fclose(copy); }
+			to_error_reaction();
+			return;
+		}
+		for (int target = 0; target < max_count; target++) {
+			fgets(save_path, sizeof(save_path), base);
+			if (target == choice - 1) {
+				printf("%s", save_path);
+			}else fputs(save_path, copy);
+		}
+	}
+	fclose(base);
+	fclose(copy);
+	remove("Memory_Card.txt");
+	if (rename("Copy_Card.txt", "Memory_Card.txt") != 0) {
+		perror("何かがおかしい");
+	}
+}
+
+
 /*
 void temp_bogo_sort(int target) {
 	MEMBER* temp;

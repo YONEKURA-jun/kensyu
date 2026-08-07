@@ -4,7 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
+#include <locale.h>
 
 #define PERSON_NAME 41
 #define COMPANY 20
@@ -106,8 +106,8 @@ void to_save_member();//現在のリストの中身を保存する
 void to_load_member();//保存されているデータを読み込んでノードを作成する
 
 int show_Memory_Card();//Memory_Cardフォルダの中身を一覧表示する
-void check_error_fnf();//ファイル喪失時にMemory_Cardフォルダの中身からpathを削除する
-
+void check_error_fnf(int choice, int max_count);//ファイル喪失時にMemory_Cardフォルダの中身からpathを削除する
+int check_character_input(char temp[]);//不正な内容のテキスト入力だった場合、規定の内容の値を返す関数
 
 
 
@@ -116,6 +116,7 @@ int main(void) {
 
 	while (end_game_flag == 0) {
 		int n_you_choice = INPUT_FAILED;
+		setlocale(LC_CTYPE, "Japanese_Japan.932");
 		n_you_choice = show_start_screen(n_you_choice);
 
 		switch (n_you_choice) {
@@ -174,17 +175,25 @@ void add_members_screen(void) {
 	char check_names[PERSON_NAME] = { 0 };
 	int gender = INPUT_FAILED;
 	int job = INPUT_FAILED;
-	int check_failed = INPUT_FAILED;
+	int check_one = INPUT_FAILED;
+	int check_two = INPUT_FAILED;
 
 	printf("仲間の名前を教えて下さい\n");
 
 
-	check_failed = scanf_s("%s", check_names, PERSON_NAME);
+	check_one = scanf_s("%s", check_names, PERSON_NAME);
 	rewind(stdin);
-	if (check_failed != 1) {
-		to_error_reaction();
+	if (check_one != 1) {
+		printf("名前が長すぎる");
 		return;
 	}
+	check_two = check_character_input(check_names);
+	if (check_two != 0) {
+		printf("おかしな文字が入っているな、ダメだ");
+		return;
+	}
+
+
 
 	printf("仲間の性別を教えて下さい\n");
 	printf("0(男)\n");
@@ -509,7 +518,8 @@ void to_save_member() {
 	MEMBER* temp_base = gp_head;
 	char save_slot[SAVE_TITLE] = { 0 };
 	char save_path[SAVE_PATH] = { 0 };
-	int check_failed = INPUT_FAILED;
+	int check_one = INPUT_FAILED;
+	int check_two = INPUT_FAILED;
 	int max_title_size = SAVE_TITLE - 1;
 	int max_count = 0;
 	int temp_choice = 0;
@@ -542,10 +552,15 @@ void to_save_member() {
 	}
 	else if (temp_choice < 1 || max_count < temp_choice) {
 		printf("セーブデータの名前を入力してくれ\n");
-		check_failed = scanf_s("%s", save_slot, SAVE_TITLE);
+		check_one = scanf_s("%s", save_slot, SAVE_TITLE);
 		rewind(stdin);
-		if (check_failed != 1) {
-			printf("ひらがなで%d文字、英語か数字なら%d文字だ\n", max_title_size / 2, max_title_size);
+		if (check_one != 1) {
+			printf("長すぎる、ひらがなで%d文字、英語か数字なら%d文字だ\n", max_title_size / 2, max_title_size);
+			return;
+		}
+		check_two = check_character_input(save_slot);
+		if (check_two != 0){
+			printf("妙な文字が入っている様だ、やり直しだ");
 			return;
 		}
 		if (fopen_s(&fp, "Memory_Card.txt", "ab") != 0) {
@@ -598,7 +613,7 @@ void to_load_member() {
 	save_path[strcspn(save_path, "\r\n")] = '\0';
 	fclose(fp);
 
-	
+
 	if (fopen_s(&fp, save_path, "rb") != 0) {
 		check_error_fnf(count, max_count);
 		return;
@@ -705,7 +720,7 @@ int show_Memory_Card() {
 		return;
 	}
 	printf("\n");
-	while (fgets(temp_path, sizeof(temp_path),fp) !=NULL) {
+	while (fgets(temp_path, sizeof(temp_path), fp) != NULL) {
 		temp_count++;
 		temp_path[strcspn(temp_path, "\r\n")] = '\0';
 		printf("%d . %s\n", temp_count, temp_path);
@@ -741,7 +756,8 @@ void check_error_fnf(int choice, int max_count) {
 			fgets(save_path, sizeof(save_path), base);
 			if (target == choice - 1) {
 				printf("%s", save_path);
-			}else fputs(save_path, copy);
+			}
+			else fputs(save_path, copy);
 		}
 	}
 	fclose(base);
@@ -752,6 +768,12 @@ void check_error_fnf(int choice, int max_count) {
 	}
 }
 
+int check_character_input(char temp[]) {
+	int ret = 0;
+	size_t save;
+	ret = mbstowcs_s(&save,NULL, 0,temp, PERSON_NAME);
+	return(ret);
+}
 
 /*
 void temp_bogo_sort(int target) {

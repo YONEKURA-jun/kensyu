@@ -1,10 +1,10 @@
-#include <stdio.h>
+ï»¿#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <locale.h>
+#include <ctype.h>
 
 #define PERSON_NAME 41
 #define COMPANY 20
@@ -13,6 +13,7 @@
 #define INPUT_FAILED -1
 #define SAVE_TITLE 11
 #define SAVE_PATH 15
+#define SAVE_SLOT 8
 #define NEW_DATA -1
 
 enum CHOICE {
@@ -49,74 +50,78 @@ typedef struct member {
 
 static MEMBER* gp_head = { NULL };
 
-
 char* psz_job_List[WORK] = {
-	{"—EÒ"},
-	{"ím"},
-	{"‘m—µ"},
-	{"–‚–@g‚¢"},
-	{"“‘¯"},
-	{"—V‚Ñl"},
+	{"å‹‡è€…"},
+	{"æˆ¦å£«"},
+	{"åƒ§ä¾¶"},
+	{"é­”æ³•ä½¿ã„"},
+	{"ç›—è³Š"},
+	{"éŠã³äºº"},
 };
 
 char* p_gender_list[GENDER] = {
-	{"’j"},
-	{"—"},
+	{"ç”·"},
+	{"å¥³"},
 };
 
 
 
-static int g_person = 0;//Œ»İ‚Ìƒp[ƒeƒB[l”‚ğŠi”[‚·‚é
+static int g_person = 0;//ç¾åœ¨ã®ãƒ‘ãƒ¼ãƒ†ã‚£ãƒ¼äººæ•°ã‚’æ ¼ç´ã™ã‚‹
+static char (*g_MemoeyCard_copy)[SAVE_PATH] = NULL;
+
+int show_start_screen(int button);//ã‚¹ã‚¿ãƒ¼ãƒˆç”»é¢
+void add_members_screen();//ä»²é–“è¿½åŠ ç”»é¢
+void show_member_screen();//ç™»éŒ²æ¸ˆä»²é–“ãƒ©ã‚¤ãƒ–ãƒ©ãƒªé–²è¦§ã®ç”»é¢
+void delete_parties_screen(); //ä»²é–“è§£é›‡ã®ç”»é¢
+void sort_member_screen();//ç™»éŒ²æ¸ˆã¿ã®ä»²é–“ã‚’ä¸¦ã¹æ›¿ãˆã‚‹ç”»é¢
+void save_load_screen();//ç¾åœ¨ãƒ‡ãƒ¼ã‚¿ã®ä¿å­˜åŠã³ä¿å­˜æ¸ˆã¿ãƒ‡ãƒ¼ã‚¿ã®èª­è¾¼ç”»é¢
 
 
-int show_start_screen(int button);//ƒXƒ^[ƒg‰æ–Ê
-void add_members_screen();//’‡ŠÔ’Ç‰Á‰æ–Ê
-void show_member_screen();//“o˜^Ï’‡ŠÔƒ‰ƒCƒuƒ‰ƒŠ‰{——‚Ì‰æ–Ê
-void delete_parties_screen(); //’‡ŠÔ‰ğŒÙ‚Ì‰æ–Ê
-void sort_member_screen();//“o˜^Ï‚İ‚Ì’‡ŠÔ‚ğ•À‚×‘Ö‚¦‚é‰æ–Ê
-void save_load_screen();//Œ»İƒf[ƒ^‚Ì•Û‘¶‹y‚Ñ•Û‘¶Ï‚İƒf[ƒ^‚Ì“Ç‰æ–Ê
-
-
-//ˆø”‚Ì”Ô†‚ÌƒŠƒXƒg‚Ìƒ|ƒCƒ“ƒ^‚ğ•Ô‚·ŠÖ”
+//å¼•æ•°ã®ç•ªå·ã®ãƒªã‚¹ãƒˆã®ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™é–¢æ•°
 MEMBER* get_member(int number);
-int very_safety_input(int lowest, int highest);//•s³‚È“ü—Í‚ğ’e‚­ŠÖ”
-void show_member(MEMBER* temp);//’‡ŠÔƒXƒe[ƒ^ƒX‰{——ŠÖ”
-//•s³‚È“ü—Í‚ÌÛ‚É—¬‚ê‚éƒZƒŠƒt‚ÌŠÖ”
+int very_safety_input(int lowest, int highest);//ä¸æ­£ãªå…¥åŠ›ã‚’å¼¾ãé–¢æ•°
+void show_member(MEMBER* temp);//ä»²é–“ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹é–²è¦§é–¢æ•°
+//ä¸æ­£ãªå…¥åŠ›ã®éš›ã«æµã‚Œã‚‹ã‚»ãƒªãƒ•ã®é–¢æ•°
 void to_error_reaction(void);
 
 
-//’‡ŠÔ‚ª‹‚È‚¢ó‘Ô‚Å‚Ì‰ğŒÙE‰{——Eƒ\[ƒg‚Ì‘I‘ğ‚ğ’e‚­B
+//ä»²é–“ãŒå±…ãªã„çŠ¶æ…‹ã§ã®è§£é›‡ãƒ»é–²è¦§ãƒ»ã‚½ãƒ¼ãƒˆã®é¸æŠã‚’å¼¾ãã€‚
 int member_is_enpty(int now_member);
-void delete_person(int button);//’‡ŠÔ’P‘Ì•ªƒƒ‚ƒŠ‚ÌŠJ•ú‚ğs‚¤ŠÖ”
-void to_free_all_array(void);//‘S’‡ŠÔ•ª‚Ìæ“¾‚µ‚½ƒƒ‚ƒŠ‚ÌŠJ•úŠÖ”
+void delete_person(int button);//ä»²é–“å˜ä½“åˆ†ãƒ¡ãƒ¢ãƒªã®é–‹æ”¾ã‚’è¡Œã†é–¢æ•°
+void to_free_all_array(void);//å…¨ä»²é–“åˆ†ã®å–å¾—ã—ãŸãƒ¡ãƒ¢ãƒªã®é–‹æ”¾é–¢æ•°
 
 
-//:ƒ\[ƒgÀs‚Ìˆ×A‘ÎÛƒŠƒXƒg‚©‚çƒm[ƒh‚ğˆê‚Â‚¸‚Âæ‚èŠO‚·ŠÖ”
+//:ã‚½ãƒ¼ãƒˆå®Ÿè¡Œã®ç‚ºã€å¯¾è±¡ãƒªã‚¹ãƒˆã‹ã‚‰ãƒãƒ¼ãƒ‰ã‚’ä¸€ã¤ãšã¤å–ã‚Šå¤–ã™é–¢æ•°
 MEMBER* insartion_sort(MEMBER* base, MEMBER* key, bool(*compare_member)(MEMBER*, MEMBER*));
-//:ƒ\[ƒg‚ÌÀÛ‚Ìˆ—‚ğs‚¤ŠÖ”
+//:ã‚½ãƒ¼ãƒˆã®å®Ÿéš›ã®å‡¦ç†ã‚’è¡Œã†é–¢æ•°
 void to_member_sort(int sort_type);
 
-bool target_gender(MEMBER* base, MEMBER* key);//”äŠr‚ğ–Ú“I‚É‘ÎÛ‚Ì’l‚ğæ‚èo‚·
+bool target_gender(MEMBER* base, MEMBER* key);//æ¯”è¼ƒã‚’ç›®çš„ã«å¯¾è±¡ã®å€¤ã‚’å–ã‚Šå‡ºã™
 bool target_job(MEMBER* base, MEMBER* key);//
-//“ü—Í‚³‚ê‚½’l‚É‘Î‰‚µ‚ÄAƒ\[ƒg‚Ì‘ÎÛ‚ğæ‚èo‚·ˆ×‚ÌŠÖ”‚ğ‘I‚ÔB
+//å…¥åŠ›ã•ã‚ŒãŸå€¤ã«å¯¾å¿œã—ã¦ã€ã‚½ãƒ¼ãƒˆã®å¯¾è±¡ã‚’å–ã‚Šå‡ºã™ç‚ºã®é–¢æ•°ã‚’é¸ã¶ã€‚
 bool(*target_list(int sort_type))(MEMBER*, MEMBER*);
 
 
-void to_save_member();//Œ»İ‚ÌƒŠƒXƒg‚Ì’†g‚ğ•Û‘¶‚·‚é
-void to_load_member();//•Û‘¶‚³‚ê‚Ä‚¢‚éƒf[ƒ^‚ğ“Ç‚İ‚ñ‚Åƒm[ƒh‚ğì¬‚·‚é
+void to_save_member();//ç¾åœ¨ã®ãƒªã‚¹ãƒˆã®ä¸­èº«ã‚’ä¿å­˜ã™ã‚‹
+void to_load_member();//ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚“ã§ãƒãƒ¼ãƒ‰ã‚’ä½œæˆã™ã‚‹
 
-int show_Memory_Card();//Memory_CardƒtƒHƒ‹ƒ_‚Ì’†g‚ğˆê——•\¦‚·‚é
-void check_error_fnf(int choice, int max_count);//ƒtƒ@ƒCƒ‹‘r¸‚ÉMemory_CardƒtƒHƒ‹ƒ_‚Ì’†g‚©‚çpath‚ğíœ‚·‚é
-int check_character_input(char temp[]);//•s³‚È“à—e‚ÌƒeƒLƒXƒg“ü—Í‚¾‚Á‚½ê‡A‹K’è‚Ì“à—e‚Ì’l‚ğ•Ô‚·ŠÖ”
+int show_MemoryCard();//Memory_Cardãƒ•ã‚©ãƒ«ãƒ€ã®ä¸­èº«ã‚’ä¸€è¦§è¡¨ç¤ºã™ã‚‹
+void check_error_fnf(int choice, int max_count);//ãƒ•ã‚¡ã‚¤ãƒ«å–ªå¤±æ™‚ã«Memory_Cardãƒ•ã‚©ãƒ«ãƒ€ã®ä¸­èº«ã‹ã‚‰pathã‚’å‰Šé™¤ã™ã‚‹
 
+
+void make_MemoryCard_copy_array();//å¤–éƒ¨ãƒ†ã‚­ã‚¹ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’å‚ç…§ã—ãã®å†…å®¹ã‚’ã‚³ãƒ”ãƒ¼ã—ãŸé…åˆ—ã‚’ä½œæˆã™ã‚‹é–¢æ•°
+int get_target_file_size(const char* target_name);//å¯¾è±¡ã®ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚µã‚¤ã‚ºã‚’å–å¾—ã—ã€ãã®å¤§ãã•ã‚’è¿”ã™é–¢æ•°
+
+// int check_character_input(char base[]);//ä¸æ­£ãªå†…å®¹ã®ãƒ†ã‚­ã‚¹ãƒˆå…¥åŠ›ã ã£ãŸå ´åˆã€è¦å®šã®å†…å®¹ã®å€¤ã‚’è¿”ã™é–¢æ•°
+void test_printer(int target_size);//ãƒ†ã‚¹ãƒˆè¡¨ç¤ºç”¨æ¤œæŸ»ãƒ„ãƒ¼ãƒ«
 
 
 int main(void) {
 	bool end_game_flag = 0;
+	make_MemoryCard_copy_array();
 
 	while (end_game_flag == 0) {
 		int n_you_choice = INPUT_FAILED;
-		setlocale(LC_CTYPE, "Japanese_Japan.932");
 		n_you_choice = show_start_screen(n_you_choice);
 
 		switch (n_you_choice) {
@@ -151,16 +156,16 @@ int main(void) {
 
 
 int  show_start_screen(int button) {
-	printf("ƒ‹ƒC[ƒ_‚Ìğê‚É‚æ‚¤‚±‚»\n");
-	printf("Œ»İ‚Ì’‡ŠÔ‚Ì”F%d\n", g_person);
+	printf("ãƒ«ã‚¤ãƒ¼ãƒ€ã®é…’å ´ã«ã‚ˆã†ã“ã\n");
+	printf("ç¾åœ¨ã®ä»²é–“ã®æ•°ï¼š%d\n", g_person);
 	printf("\n");
 
-	printf("0:’‡ŠÔ‚Ì‰{——\n");
-	printf("1:’‡ŠÔ‚Ì’Ç‰Á\n");
-	printf("2:’‡ŠÔ‚Ìíœ\n");
-	printf("3:’‡ŠÔ‚ğƒ\[ƒg\n");
-	printf("4:ƒZ[ƒu/ƒ[ƒh‚·‚é\n");
-	printf("ã‹LˆÈŠO:I—¹\n");
+	printf("0:ä»²é–“ã®é–²è¦§\n");
+	printf("1:ä»²é–“ã®è¿½åŠ \n");
+	printf("2:ä»²é–“ã®å‰Šé™¤\n");
+	printf("3:ä»²é–“ã‚’ã‚½ãƒ¼ãƒˆ\n");
+	printf("4:ã‚»ãƒ¼ãƒ–/ãƒ­ãƒ¼ãƒ‰ã™ã‚‹\n");
+	printf("ä¸Šè¨˜ä»¥å¤–:çµ‚äº†\n");
 
 	scanf_s("%d", &button);
 	rewind(stdin);
@@ -178,26 +183,19 @@ void add_members_screen(void) {
 	int check_one = INPUT_FAILED;
 	int check_two = INPUT_FAILED;
 
-	printf("’‡ŠÔ‚Ì–¼‘O‚ğ‹³‚¦‚Ä‰º‚³‚¢\n");
+	printf("ä»²é–“ã®åå‰ã‚’æ•™ãˆã¦ä¸‹ã•ã„\n");
 
 
 	check_one = scanf_s("%s", check_names, PERSON_NAME);
 	rewind(stdin);
 	if (check_one != 1) {
-		printf("–¼‘O‚ª’·‚·‚¬‚é");
-		return;
-	}
-	check_two = check_character_input(check_names);
-	if (check_two != 0) {
-		printf("‚¨‚©‚µ‚È•¶š‚ª“ü‚Á‚Ä‚¢‚é‚ÈAƒ_ƒ‚¾");
+		printf("åå‰ãŒé•·ã™ãã‚‹");
 		return;
 	}
 
-
-
-	printf("’‡ŠÔ‚Ì«•Ê‚ğ‹³‚¦‚Ä‰º‚³‚¢\n");
-	printf("0(’j)\n");
-	printf("1(—)\n");
+	printf("ä»²é–“ã®æ€§åˆ¥ã‚’æ•™ãˆã¦ä¸‹ã•ã„\n");
+	printf("0(ç”·)\n");
+	printf("1(å¥³)\n");
 
 	gender = very_safety_input(0, 1);
 	if (gender == INPUT_FAILED) {
@@ -205,7 +203,7 @@ void add_members_screen(void) {
 		return;
 	}
 
-	printf("’‡ŠÔ‚ÌE‹Æ‚ğ‹³‚¦‚Ä‰º‚³‚¢\n");
+	printf("ä»²é–“ã®è·æ¥­ã‚’æ•™ãˆã¦ä¸‹ã•ã„\n");
 	for (int i = 0; i < WORK; i++) {
 		printf("%d(%s)\n", i, psz_job_List[i]);
 	}
@@ -218,7 +216,7 @@ void add_members_screen(void) {
 
 	p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
 	if (p_new_member == NULL) {
-		printf("ƒƒ‚ƒŠ‚ÌŠm•Û‚É¸”s‚µ‚½A–ß‚ë‚¤");
+		printf("ãƒ¡ãƒ¢ãƒªã®ç¢ºä¿ã«å¤±æ•—ã—ãŸã€æˆ»ã‚ã†");
 		return;
 	}
 
@@ -243,7 +241,7 @@ void add_members_screen(void) {
 	}
 
 
-	printf("Ÿ‚Ì’‡ŠÔ‚ª’Ç‰Á‚³‚ê‚Ü‚µ‚½\n");
+	printf("æ¬¡ã®ä»²é–“ãŒè¿½åŠ ã•ã‚Œã¾ã—ãŸ\n");
 	printf("\n");
 	show_member(p_new_member);
 	g_person++;
@@ -251,13 +249,13 @@ void add_members_screen(void) {
 }
 
 void show_member(MEMBER* temp) {
-	printf("–¼‘O : %s\n", temp->sz_name);
+	printf("åå‰ : %s\n", temp->sz_name);
 
 	int gender_look = temp->n_gender;
-	printf("«•ÊF %s\n", p_gender_list[gender_look]);
+	printf("æ€§åˆ¥ï¼š %s\n", p_gender_list[gender_look]);
 
 	int job_look = temp->n_job;
-	printf("E‹Æ : %s\n", psz_job_List[job_look]);
+	printf("è·æ¥­ : %s\n", psz_job_List[job_look]);
 	printf("\n");
 
 
@@ -271,14 +269,14 @@ void show_member_screen(void) {
 	}
 
 
-	printf("‰{——•û–@‚ğ‘I‚ñ‚Å‚­‚¾‚³‚¢\n");
+	printf("é–²è¦§æ–¹æ³•ã‚’é¸ã‚“ã§ãã ã•ã„\n");
 	printf("\n");
 
 	int button = INPUT_FAILED;
 
-	printf("0:“Á’è‚Ì’‡ŠÔ‚Ì‰{——\n");
-	printf("1:‘S’‡ŠÔ‚Ì‰{——\n");
-	printf("ã‹LˆÈŠOF‚â‚Á‚Ï‚è‚â‚ß‚é\n");
+	printf("0:ç‰¹å®šã®ä»²é–“ã®é–²è¦§\n");
+	printf("1:å…¨ä»²é–“ã®é–²è¦§\n");
+	printf("ä¸Šè¨˜ä»¥å¤–ï¼šã‚„ã£ã±ã‚Šã‚„ã‚ã‚‹\n");
 
 	MEMBER* temp;
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
@@ -288,7 +286,7 @@ void show_member_screen(void) {
 
 	switch (button) {
 	case SINGLE_UNIT:
-		printf("‰½l–Ú‚Ì’‡ŠÔ‚ğ‰{——‚µ‚Ü‚·‚©H\n");
+		printf("ä½•äººç›®ã®ä»²é–“ã‚’é–²è¦§ã—ã¾ã™ã‹ï¼Ÿ\n");
 		button = very_safety_input(1, g_person);
 		if (button == INPUT_FAILED) {
 			to_error_reaction();
@@ -321,9 +319,9 @@ void delete_parties_screen() {
 
 	int button = INPUT_FAILED;
 
-	printf("0:“Á’è‚Ì’‡ŠÔ‚ğíœ\n");
-	printf("1:‘S’‡ŠÔ‚ğíœ\n");
-	printf("ã‹LˆÈŠOF‚â‚Á‚Ï‚è‚â‚ß‚é\n");
+	printf("0:ç‰¹å®šã®ä»²é–“ã‚’å‰Šé™¤\n");
+	printf("1:å…¨ä»²é–“ã‚’å‰Šé™¤\n");
+	printf("ä¸Šè¨˜ä»¥å¤–ï¼šã‚„ã£ã±ã‚Šã‚„ã‚ã‚‹\n");
 
 
 	button = very_safety_input(SINGLE_UNIT, ALL_UNIT);
@@ -334,8 +332,8 @@ void delete_parties_screen() {
 	switch (button) {
 
 	case SINGLE_UNIT:
-		printf("Œ»İ%dl‚Ì’‡ŠÔ‚ª‚¢‚Ü‚·\n", g_person);
-		printf("‰½”Ô–Ú‚Ì’‡ŠÔ‚ğíœ‚µ‚Ü‚·‚©H\n");
+		printf("ç¾åœ¨%däººã®ä»²é–“ãŒã„ã¾ã™\n", g_person);
+		printf("ä½•ç•ªç›®ã®ä»²é–“ã‚’å‰Šé™¤ã—ã¾ã™ã‹ï¼Ÿ\n");
 
 		button = very_safety_input(1, g_person);
 		if (button == INPUT_FAILED) {
@@ -385,12 +383,12 @@ void sort_member_screen() {
 	}
 	int button = INPUT_FAILED;
 
-	printf("ƒ\[ƒg‚Ì•û–@‚ğ‘I‚ñ‚Å‚­‚¾‚³‚¢‚");
+	printf("ã‚½ãƒ¼ãƒˆã®æ–¹æ³•ã‚’é¸ã‚“ã§ãã ã•ã„ï¿¥ï½");
 	printf("\n");
 	printf("\n");
-	printf("0:«•Ê‡‚Éƒ\[ƒg‚·‚é\n");
-	printf("1:E‹Æ‡‚Éƒ\[ƒg‚·‚é\n");
-	printf("ã‹LˆÈŠO:‚â‚Á‚Ï‚è‚â‚ß‚é\n");
+	printf("0:æ€§åˆ¥é †ã«ã‚½ãƒ¼ãƒˆã™ã‚‹\n");
+	printf("1:è·æ¥­é †ã«ã‚½ãƒ¼ãƒˆã™ã‚‹\n");
+	printf("ä¸Šè¨˜ä»¥å¤–:ã‚„ã£ã±ã‚Šã‚„ã‚ã‚‹\n");
 
 	button = very_safety_input(GENDERS, JOB);
 	if (button == INPUT_FAILED) {
@@ -437,24 +435,24 @@ MEMBER* insartion_sort(MEMBER* base, MEMBER* key, bool(*compare_member)(MEMBER*,
 	}
 
 	if (temp_base == NULL) {
-		if (insertion_point == NULL) {//Å‰‚Ìƒf[ƒ^
+		if (insertion_point == NULL) {//æœ€åˆã®ãƒ‡ãƒ¼ã‚¿
 			temp_base = key;
 			temp_base->p_prev = NULL;
 			head = temp_base;
 		}
-		else {//I’[
+		else {//çµ‚ç«¯
 			insertion_point->p_next = key;
 			key->p_prev = insertion_point;
 			key->p_next = NULL;
 		}
 	}
-	else if (temp_base->p_prev == NULL) {//æ“ª
+	else if (temp_base->p_prev == NULL) {//å…ˆé ­
 		key->p_next = temp_base;
 		key->p_prev = NULL;
 		temp_base->p_prev = key;
 		head = key;
 	}
-	else {//’†ŠÔ
+	else {//ä¸­é–“
 		key->p_next = temp_base;
 		key->p_prev = temp_base->p_prev;
 		temp_base->p_prev->p_next = key;
@@ -487,11 +485,11 @@ bool(*target_list(int sort_type))(MEMBER*, MEMBER*) {
 void save_load_screen() {
 	int button = INPUT_FAILED;
 
-	printf("‚Ç‚¤‚·‚éH\n");
+	printf("ã©ã†ã™ã‚‹ï¼Ÿ\n");
 	printf("\n");
-	printf("0:ƒZ[ƒu‚·‚é\n");
-	printf("1:ƒ[ƒh‚·‚é\n");
-	printf("ã‹LˆÈŠO:‚â‚Á‚Ï‚è«‚ß‚é\n");
+	printf("0:ã‚»ãƒ¼ãƒ–ã™ã‚‹\n");
+	printf("1:ãƒ­ãƒ¼ãƒ‰ã™ã‚‹\n");
+	printf("ä¸Šè¨˜ä»¥å¤–:ã‚„ã£ã±ã‚Šè¾ã‚ã‚‹\n");
 
 	button = very_safety_input(SAVE, LOAD);
 	if (button == INPUT_FAILED) {
@@ -525,13 +523,13 @@ void to_save_member() {
 	int temp_choice = 0;
 
 
-	max_count = show_Memory_Card();
+	max_count = show_MemoryCard();
 	if (max_count == 0) {
 		temp_choice = 0;
 	}
 	else {
-		printf("ã‹LˆÈŠO:V‹Kì¬\n");
-		printf("ã‘ƒZ[ƒu‚©V‹Kì¬‚ğ‘I‚ñ‚Å‚­‚ê\n");
+		printf("ä¸Šè¨˜ä»¥å¤–:æ–°è¦ä½œæˆ\n");
+		printf("ä¸Šæ›¸ã‚»ãƒ¼ãƒ–ã‹æ–°è¦ä½œæˆã‚’é¸ã‚“ã§ãã‚Œ\n");
 		int button = scanf_s("%d", &temp_choice);
 		rewind(stdin);
 		if (button == INPUT_FAILED) {
@@ -540,7 +538,7 @@ void to_save_member() {
 		}
 	}
 	if (1 <= temp_choice && temp_choice <= max_count) {
-		printf("ã‘ƒZ[ƒu‚¾‚ÈH\n");
+		printf("ä¸Šæ›¸ã‚»ãƒ¼ãƒ–ã ãªï¼Ÿ\n");
 		if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
 			to_error_reaction();
 			return;
@@ -551,30 +549,25 @@ void to_save_member() {
 		fclose(fp);
 	}
 	else if (temp_choice < 1 || max_count < temp_choice) {
-		printf("ƒZ[ƒuƒf[ƒ^‚Ì–¼‘O‚ğ“ü—Í‚µ‚Ä‚­‚ê\n");
+		printf("ã‚»ãƒ¼ãƒ–ãƒ‡ãƒ¼ã‚¿ã®åå‰ã‚’å…¥åŠ›ã—ã¦ãã‚Œ\n");
 		check_one = scanf_s("%s", save_slot, SAVE_TITLE);
 		rewind(stdin);
 		if (check_one != 1) {
-			printf("’·‚·‚¬‚éA‚Ğ‚ç‚ª‚È‚Å%d•¶šA‰pŒê‚©”š‚È‚ç%d•¶š‚¾\n", max_title_size / 2, max_title_size);
+			printf("é•·ã™ãã‚‹ã€ã²ã‚‰ãŒãªã§%dæ–‡å­—ã€è‹±èªã‹æ•°å­—ãªã‚‰%dæ–‡å­—ã \n", max_title_size / 2, max_title_size);
 			return;
 		}
-		check_two = check_character_input(save_slot);
-		if (check_two != 0){
-			printf("–­‚È•¶š‚ª“ü‚Á‚Ä‚¢‚é—l‚¾A‚â‚è’¼‚µ‚¾");
-			return;
-		}
+
 		if (fopen_s(&fp, "Memory_Card.txt", "ab") != 0) {
-			printf("ƒƒ‚ƒŠ[ƒJ[ƒh‚Ö‚Ì‘‚«‚İ‚É¸”s‚µ‚½\n");
+			printf("ãƒ¡ãƒ¢ãƒªãƒ¼ã‚«ãƒ¼ãƒ‰ã¸ã®æ›¸ãè¾¼ã¿ã«å¤±æ•—ã—ãŸ\n");
 			return;
 		}
 		sprintf_s(save_path, sizeof(save_path), "%s.txt", save_slot);
 		fprintf(fp, "%s\n", save_path);
 		fclose(fp);
-
 	}
 
 	if (fopen_s(&fp, save_path, "wb") != 0) {
-		printf("ÀÛ‚Ìƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚½\n");
+		printf("å®Ÿéš›ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ãŸ\n");
 		return;
 	}
 	for (int i = 0; i < g_person; i++) {
@@ -592,12 +585,12 @@ void to_load_member() {
 	int max_count;
 	FILE* fp;
 
-	max_count = show_Memory_Card();
+	max_count = show_MemoryCard();
 	if (max_count == 0) {
 		return;
 	}
 
-	printf("‘S•”‚Å %d ‘g‚Ìƒp[ƒeƒB‚ª‹L˜^‚³‚ê‚Ä‚¢‚éA‰½”Ô–Ú‚Ìƒp[ƒeƒB‚ğ˜A‚ê‚Ä‚­‚éH\n", max_count);
+	printf("å…¨éƒ¨ã§ %d çµ„ã®ãƒ‘ãƒ¼ãƒ†ã‚£ãŒè¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ã€ä½•ç•ªç›®ã®ãƒ‘ãƒ¼ãƒ†ã‚£ã‚’é€£ã‚Œã¦ãã‚‹ï¼Ÿ\n", max_count);
 	count = very_safety_input(1, max_count);
 	if (count == INPUT_FAILED) {
 		to_error_reaction();
@@ -632,7 +625,7 @@ void to_load_member() {
 	{
 		p_new_member = (MEMBER*)malloc(sizeof(MEMBER));
 		if (p_new_member == NULL) {
-			printf("ƒƒ‚ƒŠ‚ÌŠm•Û‚É¸”s‚µ‚½\n");
+			printf("ãƒ¡ãƒ¢ãƒªã®ç¢ºä¿ã«å¤±æ•—ã—ãŸ\n");
 			break;
 		}
 		*p_new_member = temp;
@@ -650,10 +643,10 @@ void to_load_member() {
 		g_person++;
 	}
 	if (feof(fp) == 0) {
-		printf("ƒtƒ@ƒCƒ‹‚Ì“Ç‚ª“r’†‚Å¸”s‚µ‚½A‰½‚©‚¨‚©‚µ‚¢‚æ‚¤‚¾\n");
+		printf("ãƒ•ã‚¡ã‚¤ãƒ«ã®èª­è¾¼ãŒé€”ä¸­ã§å¤±æ•—ã—ãŸã€ä½•ã‹ãŠã‹ã—ã„ã‚ˆã†ã \n");
 	}
 	else {
-		printf("˜A‚ê‚Ä—ˆ‚½‚¼\n");
+		printf("é€£ã‚Œã¦æ¥ãŸã\n");
 	}
 	fclose(fp);
 }
@@ -666,14 +659,14 @@ void to_free_all_array(void) {
 }
 
 void to_error_reaction(void) {
-	printf("’²q‚ªˆ«‚¢—l‚¾‚ÈA–ß‚ë‚¤\n");
+	printf("èª¿å­ãŒæ‚ªã„æ§˜ã ãªã€æˆ»ã‚ã†\n");
 	printf("\n");
 }
 
 int member_is_enpty(int now_member) {
 	int temp = 0;
 	if (now_member == 0) {
-		printf("’N‚à’‡ŠÔ‚ª‚¢‚È‚¢‚æ‚¤‚¾\n");
+		printf("èª°ã‚‚ä»²é–“ãŒã„ãªã„ã‚ˆã†ã \n");
 		printf("\n");
 		temp = INPUT_FAILED;
 	}
@@ -711,28 +704,6 @@ int very_safety_input(int lowest, int highest) {
 	return(button);
 }
 
-int show_Memory_Card() {
-	FILE* fp;
-	char temp_path[SAVE_PATH] = { 0 };
-	int temp_count = 0;
-	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
-		to_error_reaction();
-		return;
-	}
-	printf("\n");
-	while (fgets(temp_path, sizeof(temp_path), fp) != NULL) {
-		temp_count++;
-		temp_path[strcspn(temp_path, "\r\n")] = '\0';
-		printf("%d . %s\n", temp_count, temp_path);
-	}
-	if (temp_count == 0) {
-		printf("ƒZ[ƒuƒf[ƒ^‚ª–³‚¢—l‚¾‚È\n");
-	}
-	rewind(fp);
-	fclose(fp);
-	return(temp_count);
-}
-
 void check_error_fnf(int choice, int max_count) {
 	int temp_check = 0;
 	char save_path[SAVE_PATH] = { 0 };
@@ -744,7 +715,7 @@ void check_error_fnf(int choice, int max_count) {
 		return;
 	}
 	else {
-		printf("‹°‚ë‚µ‚¢–‚É‘I‘ğ‚µ‚½‚Ú‚¤‚¯‚ñ‚Ì‘‚ÍÁ‚¦‚Ä‚µ‚Ü‚Á‚½—l‚¾\n");
+		printf("æã‚ã—ã„äº‹ã«é¸æŠã—ãŸã¼ã†ã‘ã‚“ã®æ›¸ã¯æ¶ˆãˆã¦ã—ã¾ã£ãŸæ§˜ã \n");
 		if (fopen_s(&base, "Memory_Card.txt", "rb") != 0 ||
 			fopen_s(&copy, "Copy_Card.txt", "wb") != 0) {
 			if (base != NULL) { fclose(base); }
@@ -755,7 +726,7 @@ void check_error_fnf(int choice, int max_count) {
 		for (int target = 0; target < max_count; target++) {
 			fgets(save_path, sizeof(save_path), base);
 			if (target == choice - 1) {
-				printf("%s", save_path);
+				printf("%sã¯æ¶ˆãˆã¦ã—ã¾ã£ãŸ\n", save_path);
 			}
 			else fputs(save_path, copy);
 		}
@@ -764,16 +735,110 @@ void check_error_fnf(int choice, int max_count) {
 	fclose(copy);
 	remove("Memory_Card.txt");
 	if (rename("Copy_Card.txt", "Memory_Card.txt") != 0) {
-		perror("‰½‚©‚ª‚¨‚©‚µ‚¢");
+		perror("ä½•ã‹ãŒãŠã‹ã—ã„ã€å†’é™ºã®æ›¸ã¯å…¨ã¦æ¶ˆãˆã¦ã—ã¾ã£ãŸ");
 	}
 }
 
-int check_character_input(char temp[]) {
-	int ret = 0;
-	size_t save;
-	ret = mbstowcs_s(&save,NULL, 0,temp, PERSON_NAME);
-	return(ret);
+
+int show_MemoryCard() {
+	FILE* fp;
+	char temp_path[SAVE_PATH] = { 0 };
+	int temp_count = 0;
+
+	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+		to_error_reaction();
+		return;
+	}
+	printf("\n");
+	while (fgets(temp_path, sizeof(temp_path), fp) != NULL) {
+		temp_count++;
+		temp_path[strcspn(temp_path, "\r\n")] = '\0';
+		printf("%d . %s\n", temp_count, temp_path);
+	}
+	if (temp_count == 0) {
+		printf("ã‚»ãƒ¼ãƒ–ãƒ‡ãƒ¼ã‚¿ã¯ç„¡ã„ãª\n");
+	}
+	rewind(fp);
+	fclose(fp);
+	return(temp_count);
 }
+
+
+void make_MemoryCard_copy_array() {
+	long target_size = 0;
+	long haw_many = 0;
+	char temp_path[SAVE_PATH] = { 0 };
+	FILE* fp;
+	int src_data_counter = 0;
+	int temp;
+
+
+	target_size = get_target_file_size("Memory_Card.txt");
+	if (target_size == -1) {
+		printf("ã‚µã‚¤ã‚ºã®èª­å–ã«å¤±æ•—ã—ãŸã€æˆ»ã‚‹ã\n");
+		return;
+	}
+
+	if (fopen_s(&fp, "Memory_Card.txt", "rb") != 0) {
+		to_error_reaction();
+		return;
+	}
+
+	g_MemoeyCard_copy = calloc((target_size / SAVE_PATH)+1, SAVE_PATH);
+
+	while (fgets(temp_path, sizeof(temp_path), fp) != NULL) {
+		temp_path[strcspn(temp_path, "\r\n")] = '\0';
+		sprintf_s(g_MemoeyCard_copy[src_data_counter], SAVE_PATH, temp_path);
+		src_data_counter++;
+	}
+	printf("src_data_counter = %d\n", src_data_counter);
+	fclose(fp);
+	test_printer(src_data_counter);
+}
+
+int get_target_file_size(const char* target_name) {
+	FILE* fp;
+	int checker = 0;
+	int file_size = 0;
+
+	if (fopen_s(&fp, target_name, "rb") != 0) {
+		printf("å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã®ã«å¤±æ•—ã—ãŸ");
+		return;
+	}
+	checker = fseek(fp, 0, SEEK_END);
+	if (checker != 0) {
+		file_size = -1;
+	}
+
+	if (file_size != -1) {
+		file_size = ftell(fp);
+	}
+	fclose(fp);
+	return(file_size);
+}
+
+void test_printer(int count) {
+		printf("count = %d\n\n", count);
+
+		for (int i = 0; i < count; i++)
+		{
+			printf("[%d]\n", i);
+			printf("len = %zu\n", strlen(g_MemoeyCard_copy[i]));
+			printf("data = [%s]\n", g_MemoeyCard_copy[i]);
+		}
+	}
+
+/*int check_character_input(char base[]) {//ä¸€æ—¦å°å°ã€ä½œæ¥­å†é–‹ã¯å¾Œ
+	char temp[5];
+
+	int target = 1;
+	while (temp !='\0') {//æœ€åˆã®ï¼”ãƒã‚¤ãƒˆã§ä¸­èº«ãŒã©ã®ã‚µã‚¤ã‚ºã‹ã‚’åˆ¤å®šã€€ã€€ã€€ã€€ã—ãªã„ã¨è¡Œã‘ãªã„ã€‚
+		temp[0] = base[target];
+		isalnum(base[target]);
+
+	}
+
+}*/
 
 /*
 void temp_bogo_sort(int target) {
